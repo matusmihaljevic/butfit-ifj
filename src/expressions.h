@@ -1,5 +1,5 @@
 /**
- * @file parser.h
+ * @file expressions.h
  * 
  * Syntaktický analyzátor 
  * 
@@ -11,9 +11,5 @@
  * @author <xpodmaj00> Jaroslav Podmajerský
  */
 
-#include"common.h"
+#pragma once
 
-int main()
-{
-    
-}
