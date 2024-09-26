@@ -13,3 +13,38 @@
 
 #pragma once
 
+typedef enum {
+    TOKEN_CONST,
+    TOKEN_VAR,
+    TOKEN_PUB,
+    TOKEN_FN,
+    TOKEN_FUNCTION_CALL,
+    TOKEN_STRUCT,               //5
+    TOKEN_IMPORT,
+    TOKEN_IDENTIFIER,           //7
+    TOKEN_NUMBER,
+    TOKEN_STRING_LITERAL,
+    TOKEN_PLUS,                 //10
+    TOKEN_MINUS,
+    TOKEN_MULTIPLY,
+    TOKEN_DIVIDE,
+    TOKEN_EQUAL,
+    TOKEN_LPAREN,               //15
+    TOKEN_RPAREN,
+    TOKEN_LBRACE,
+    TOKEN_RBRACE,
+    TOKEN_SEMICOLON,
+    TOKEN_COLON,                //20
+    TOKEN_ARRAY_OPEN,
+    TOKEN_ARRAY_CLOSE,
+    TOKEN_POINTER,
+    TOKEN_IF,
+    TOKEN_WHILE,
+    TOKEN_RETURN,
+    TOKEN_COMMA,
+    TOKEN_TYPE,
+    TOKEN_I32,
+    TOKEN_F64,
+    TOKEN_U8,
+    TOKEN_EOF,
+}eToken_type;

@@ -11,21 +11,21 @@
  * @author <xpodmaj00> Jaroslav Podmajerský
  */
 
-typedef struct Error
+typedef struct
 {
-    int err_num = 0;
-    char* err_msg = "";
-}sError;
+    int err_num;
+    char* err_msg;
+}Error;
 
-typedef struct Token
+typedef struct
 {
-    char* lexeme = "";      // lexeme of a variable, fn ...  
-    int type = 0;           // variable, keyword, identifier, ...
-    __uint128_t value = 0;
-    int line = 0;
-    sError Error;
-}sToken;
+    char* lexeme;      // lexeme of a variable, fn ...  
+    int type;           // variable, keyword, identifier, ...
+    int line;
+    Error Error;
+}Token;
 
+#define NO_ERROR                0  //<Žiadna chyba>
 #define E_LEXICAL               1  //<Chyba v rámci lexikálnej analýzy>
 #define E_SYNTAX                2  //<Chyba v rámci syntaktickej analýzy>
 #define E_SEMANTIC_udcl         3  //<Nedefinová funkcia alebo premenná>
