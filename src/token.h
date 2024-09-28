@@ -37,6 +37,9 @@ typedef enum
 	TOKEN_TYPE_EOL, // End of line
 	TOKEN_TYPE_EMPTY, // Empty
 
+	TOKEN_TYPE_PUB, //
+	TOKEN_TYPE_FN, //
+
 	TOKEN_TYPE_IDENTIFIER, // Identifier
 	TOKEN_TYPE_KEYWORD, // Keyword
 	TOKEN_TYPE_INTERN, // Intern function
@@ -82,8 +85,8 @@ typedef union
 
 typedef struct
 {
-    const unsigned int code;
-    const char *message;
+    unsigned int code;
+    char *message;
 } Token_error;
 
 /**
@@ -91,11 +94,11 @@ typedef struct
  */
 typedef struct
 {
-    const char *lexeme;
+    char *lexeme;
 	Token_type type; // Token type, one of token_type constants.
 	Token_attribute attribute; // Attribute of token.
-	Token_error error; // Token error.
-    const unsigned int line;
+	Token_error Error; // Token error.
+    unsigned int line;
 } Token;
 
 #endif //_TOKEN_H

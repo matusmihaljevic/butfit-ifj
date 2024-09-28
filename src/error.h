@@ -9,6 +9,7 @@
 #define _ERROR_H
 
 // Error Codes
+#define NO_ERROR 0 //No error found
 #define SCANNER_ERROR_LEX 1 // Error in lexical analysis (invalid structure of the current lexeme)
 #define PARSER_ERROR_SYNTAX 2 // Error in syntax analysis (invalid syntax, missing header, etc.)
 #define SEMANTIC_ERROR_UNDEFINED 3 // Semantic error - undefined function or variable
