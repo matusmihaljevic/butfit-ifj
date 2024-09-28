@@ -21,20 +21,16 @@ int lookahead_count = 0;
 int token_position = 0;
 
 Token mock_tokens[] = {
-    { "const", TOKEN_CONST, 1, { 0, "" } },              // const keyword
-    { "x", TOKEN_IDENTIFIER, 1, { 0, "" } },             // identifier "x"
-    { "=", TOKEN_EQUAL, 1, { 0, "" } },                  // assignment operator "="
-    { "a", TOKEN_IDENTIFIER, 1, { 0, "" } },             // identifier "a"
-    { "+", TOKEN_OPERATOR, 1, { 0, "" } },               // operator "+"
-    { "42", TOKEN_NUMBER, 1, { 0, "" } },                // number "42"
-    { "*", TOKEN_OPERATOR, 1, { 0, "" } },               // operator "*"
-    { "(", TOKEN_LPAREN, 1, { 0, "" } },                 // left parenthesis "("
-    { "b", TOKEN_IDENTIFIER, 1, { 0, "" } },             // identifier "b"
-    { "-", TOKEN_OPERATOR, 1, { 0, "" } },               // operator "-"
-    { "3", TOKEN_NUMBER, 1, { 0, "" } },                 // number "3"
-    { ")", TOKEN_RPAREN, 1, { 0, "" } },                 // right parenthesis ")"
-    { ";", TOKEN_SEMICOLON, 1, { 0, "" } },              // semicolon ";"
-    { "", TOKEN_EOF, 1, { 0, "" } }                      // end of file
+    { "const", TOKEN_CONST, 1, { 0, "" } },          // const keyword
+    { "id", TOKEN_IDENTIFIER, 1, { 0, "" } },        // identifier "id"
+    { ":", TOKEN_COLON, 1, { 0, "" } },              // colon for type declaration
+    { "u8", TOKEN_TYPE, 1, { 0, "" } },              // type "u8"
+    { "=", TOKEN_EQUAL, 1, { 0, "" } },              // assignment operator "="
+    { "5", TOKEN_NUMBER, 1, { 0, "" } },             // number 5
+    { "+", TOKEN_OPERATOR, 1, { 0, "" } },           // addition operator "+"
+    { "7", TOKEN_NUMBER, 1, { 0, "" } },             // number 7
+    { ";", TOKEN_SEMICOLON, 1, { 0, "" } },          // semicolon
+    { "", TOKEN_EOF, 1, { 0, "" } }                  // end of file
 };
 
 //Functions to recieve Tokens and operate with Tokens
@@ -95,19 +91,25 @@ void destroy_lookahead() {
 //Grammar of the Language
 void parse_factor()
 {
+    //if(match(TOKEN_SEMICOLON)) {current_token.Error.err_num = E_SEMANTIC_incmpt; return;}
+
     if(match(TOKEN_IDENTIFIER) || match(TOKEN_NUMBER))
     {
+        printf("Found id or number\n");
         return;
     }
     else if(match(TOKEN_LPAREN))
     {
+        printf("Found left P\n");
         parse_expression();
         if(!match(TOKEN_RPAREN)){
             current_token.Error.err_num = E_SYNTAX; return;
         }
+        printf("Found right P\n");
     }
     else
     {
+        printf("found err\n");
         current_token.Error.err_num = E_SYNTAX; return;
     }
     
@@ -116,21 +118,23 @@ void parse_factor()
 void parse_term()
 {
     parse_factor();
-    while(match(TOKEN_OPERATOR) && (strcmp(current_token.lexeme,"*") == 0 || strcmp(current_token.lexeme,"/") == 0))
+    if ((strcmp(current_token.lexeme,"*") == 0 || strcmp(current_token.lexeme,"/") == 0) && match(TOKEN_OPERATOR))
     {
-        advance_token();
+        printf("Found operator * or /\n");
         parse_factor();
     }
+    
 }
 
 void parse_expression()
 {
     parse_term();
-    while (match(TOKEN_OPERATOR) && (strcmp(current_token.lexeme, "+") == 0 || strcmp(current_token.lexeme, "-") == 0))
+    if ((strcmp(current_token.lexeme, "+") == 0 || strcmp(current_token.lexeme, "-") == 0) && match(TOKEN_OPERATOR))
     {
-        advance_token();
+        printf("Found operator + or -\n");
         parse_term();
     }
+    
 }
 
 void parse_function_declaration()
@@ -207,15 +211,25 @@ void parse_const_declaration()
     if(!match(TOKEN_IDENTIFIER)){
         current_token.Error.err_num = E_SYNTAX; return;
     }
-    //---NEMUSI BYT '=' , moze byt aj ;
+
+    if(match(TOKEN_SEMICOLON)) return;  //V tomto pripade deklaracia konci
+    if(match(TOKEN_COLON)){  //Pokial sa vyskytne ':' musi nasledovat typ
+        if(!match(TOKEN_TYPE)){
+            current_token.Error.err_num = E_SYNTAX; return;
+        }
+    }
+
     if(!match(TOKEN_EQUAL)){
         current_token.Error.err_num = E_SYNTAX; return;
     }
+
     parse_expression();
+    if(current_token.Error.err_num == E_SYNTAX) return;
     if(!match(TOKEN_SEMICOLON)){
         current_token.Error.err_num = E_SYNTAX; return;
     }
 }
+
 
 int main()
 {
