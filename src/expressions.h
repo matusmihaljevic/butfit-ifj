@@ -18,18 +18,16 @@ typedef enum {
     TOKEN_VAR,
     TOKEN_PUB,
     TOKEN_FN,
+    TOKEN_EXPRESSION,
+    TOKEN_OPERATOR,
     TOKEN_FUNCTION_CALL,
-    TOKEN_STRUCT,               //5
+    TOKEN_STRUCT,               
     TOKEN_IMPORT,
-    TOKEN_IDENTIFIER,           //7
+    TOKEN_IDENTIFIER,           
     TOKEN_NUMBER,
     TOKEN_STRING_LITERAL,
-    TOKEN_PLUS,                 //10
-    TOKEN_MINUS,
-    TOKEN_MULTIPLY,
-    TOKEN_DIVIDE,
     TOKEN_EQUAL,
-    TOKEN_LPAREN,               //15
+    TOKEN_LPAREN,               
     TOKEN_RPAREN,
     TOKEN_LBRACE,
     TOKEN_RBRACE,

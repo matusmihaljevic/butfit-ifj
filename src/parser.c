@@ -21,36 +21,23 @@ int lookahead_count = 0;
 int token_position = 0;
 
 Token mock_tokens[] = {
-    { "pub", TOKEN_PUB, 1, { NO_ERROR, "" } },           // pub keyword
-    { "fn", TOKEN_FN, 1, { NO_ERROR, "" } },             // fn keyword
-    { "build", TOKEN_IDENTIFIER, 1, { NO_ERROR, "" } },  // function name
-    { "(", TOKEN_LPAREN, 1, { NO_ERROR, "" } },          // (
-    { "x", TOKEN_IDENTIFIER, 1, { NO_ERROR, "" } },      // first parameter
-    { ":", TOKEN_COLON, 1, { NO_ERROR, "" } },           // :
-    { "[]u8", TOKEN_TYPE, 1, { NO_ERROR, "" } },         // type of x
-    { ",", TOKEN_COMMA, 1, { NO_ERROR, "" } },           // ,
-    { "y", TOKEN_IDENTIFIER, 1, { NO_ERROR, "" } },      // second parameter
-    { ":", TOKEN_COLON, 1, { NO_ERROR, "" } },           // :
-    { "[]u8", TOKEN_TYPE, 1, { NO_ERROR, "" } },         // type of y
-    { ")", TOKEN_RPAREN, 1, { NO_ERROR, "" } },          // )
-    { "[]u8", TOKEN_TYPE, 1, { NO_ERROR, "" } },         // return type
-    { "{", TOKEN_LBRACE, 2, { NO_ERROR, "" } },          // {
-    { "const", TOKEN_CONST, 3, { NO_ERROR, "" } },       // const keyword
-    { "res", TOKEN_IDENTIFIER, 3, { NO_ERROR, "" } },    // constant name
-    { "=", TOKEN_EQUAL, 3, { NO_ERROR, "" } },           // =
-    { "ifj.concat", TOKEN_FUNCTION_CALL, 3, { NO_ERROR, "" } },  // function call
-    { "(", TOKEN_LPAREN, 3, { NO_ERROR, "" } },          // (
-    { "x", TOKEN_IDENTIFIER, 3, { NO_ERROR, "" } },      // first argument
-    { ",", TOKEN_COMMA, 3, { NO_ERROR, "" } },           // ,
-    { "y", TOKEN_IDENTIFIER, 3, { NO_ERROR, "" } },      // second argument
-    { ")", TOKEN_RPAREN, 3, { NO_ERROR, "" } },          // )
-    { ";", TOKEN_SEMICOLON, 3, { NO_ERROR, "" } },       // ;
-    { "return", TOKEN_RETURN, 4, { NO_ERROR, "" } },     // return keyword
-    { "res", TOKEN_IDENTIFIER, 4, { NO_ERROR, "" } },    // return value
-    { ";", TOKEN_SEMICOLON, 4, { NO_ERROR, "" } },       // ;
-    { "}", TOKEN_RBRACE, 5, { NO_ERROR, "" } },          // }
-    { "", TOKEN_EOF, 6, { NO_ERROR, "" } }               // EOF
+    { "const", TOKEN_CONST, 1, { 0, "" } },              // const keyword
+    { "x", TOKEN_IDENTIFIER, 1, { 0, "" } },             // identifier "x"
+    { "=", TOKEN_EQUAL, 1, { 0, "" } },                  // assignment operator "="
+    { "a", TOKEN_IDENTIFIER, 1, { 0, "" } },             // identifier "a"
+    { "+", TOKEN_OPERATOR, 1, { 0, "" } },               // operator "+"
+    { "42", TOKEN_NUMBER, 1, { 0, "" } },                // number "42"
+    { "*", TOKEN_OPERATOR, 1, { 0, "" } },               // operator "*"
+    { "(", TOKEN_LPAREN, 1, { 0, "" } },                 // left parenthesis "("
+    { "b", TOKEN_IDENTIFIER, 1, { 0, "" } },             // identifier "b"
+    { "-", TOKEN_OPERATOR, 1, { 0, "" } },               // operator "-"
+    { "3", TOKEN_NUMBER, 1, { 0, "" } },                 // number "3"
+    { ")", TOKEN_RPAREN, 1, { 0, "" } },                 // right parenthesis ")"
+    { ";", TOKEN_SEMICOLON, 1, { 0, "" } },              // semicolon ";"
+    { "", TOKEN_EOF, 1, { 0, "" } }                      // end of file
 };
+
+//Functions to recieve Tokens and operate with Tokens
 
 Token get_token() {
     return mock_tokens[token_position++];
@@ -105,6 +92,47 @@ void destroy_lookahead() {
 }
 
 
+//Grammar of the Language
+void parse_factor()
+{
+    if(match(TOKEN_IDENTIFIER) || match(TOKEN_NUMBER))
+    {
+        return;
+    }
+    else if(match(TOKEN_LPAREN))
+    {
+        parse_expression();
+        if(!match(TOKEN_RPAREN)){
+            current_token.Error.err_num = E_SYNTAX; return;
+        }
+    }
+    else
+    {
+        current_token.Error.err_num = E_SYNTAX; return;
+    }
+    
+}
+
+void parse_term()
+{
+    parse_factor();
+    while(match(TOKEN_OPERATOR) && (strcmp(current_token.lexeme,"*") == 0 || strcmp(current_token.lexeme,"/") == 0))
+    {
+        advance_token();
+        parse_factor();
+    }
+}
+
+void parse_expression()
+{
+    parse_term();
+    while (match(TOKEN_OPERATOR) && (strcmp(current_token.lexeme, "+") == 0 || strcmp(current_token.lexeme, "-") == 0))
+    {
+        advance_token();
+        parse_term();
+    }
+}
+
 void parse_function_declaration()
 {
     if(!match(TOKEN_PUB)){
@@ -133,60 +161,9 @@ void parse_function_declaration()
         current_token.Error.err_num = E_SYNTAX; return;
         return;
     }
-    // Parse the body of the function
-    if (!match(TOKEN_CONST)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_IDENTIFIER)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_EQUAL)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_FUNCTION_CALL)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_LPAREN)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_IDENTIFIER)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_COMMA)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_IDENTIFIER)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_RPAREN)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_SEMICOLON)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    // Handle return statement
-    if (!match(TOKEN_RETURN)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_IDENTIFIER)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
-    if (!match(TOKEN_SEMICOLON)) {
-        current_token.Error.err_num = E_SYNTAX; return;
-        return;
-    }
+    
+    //BODY OF THE FUNCTION
+
     if (!match(TOKEN_RBRACE)) {
         current_token.Error.err_num = E_SYNTAX; return;
         return;
@@ -222,16 +199,28 @@ void parse_parameters()
     }
 }
 
-
 void parse_const_declaration()
 {
-    return;
+    if(!match(TOKEN_CONST)){
+        current_token.Error.err_num = E_SYNTAX; return;
+    }
+    if(!match(TOKEN_IDENTIFIER)){
+        current_token.Error.err_num = E_SYNTAX; return;
+    }
+    //---NEMUSI BYT '=' , moze byt aj ;
+    if(!match(TOKEN_EQUAL)){
+        current_token.Error.err_num = E_SYNTAX; return;
+    }
+    parse_expression();
+    if(!match(TOKEN_SEMICOLON)){
+        current_token.Error.err_num = E_SYNTAX; return;
+    }
 }
 
 int main()
 {
     current_token = get_token();
-    parse_function_declaration();
+    parse_const_declaration();
     if(current_token.Error.err_num != NO_ERROR) return current_token.Error.err_num;
     return 0;
 }

@@ -14,6 +14,8 @@
 #pragma once
 #include "common.h"
 #include "expressions.h"
+#include<string.h>
+
 Token get_token(); //Lexer vrati TOKEN todo ASAP
 Token peek_token();
 void advance_token();
@@ -22,6 +24,10 @@ void store_token();
 void take_token();
 int match(int token_type);
 void destroy_lookahead();
+
+void parse_expression();
+void parse_term();
+void parse_factor();
 
 void parse_const_declaration();
 void parse_function_declaration();
