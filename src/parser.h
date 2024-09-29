@@ -7,8 +7,9 @@
 #pragma once
 
 #include "error.h"
-#include "token.h"
+#include "AST.h"
 #include<string.h>
+#include<stdlib.h>
 
 Token get_token(); //Lexer vrati TOKEN todo ASAP
 Token peek_token();
@@ -19,11 +20,20 @@ void take_token();
 int match(Token_type token_type);
 void destroy_lookahead();
 
-void parse_expression();
-void parse_term();
-void parse_factor();
+ASTNode* parse_program();
+ASTNode* parse_code_block(); 
+ASTNode* parse_statement();
+ASTNode* parse_fn_declaration();
+ASTNode* parse_fn_body();
 
-void parse_declaration();
-void parse_const_declaration();
-void parse_function_declaration();
-void parse_parameters();
+ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right);
+void print_ast(ASTNode* node, int depth);
+
+ASTNode* parse_expression();
+ASTNode* parse_term();
+ASTNode* parse_factor();
+
+ASTNode* parse_declaration();
+ASTNode* parse_const_declaration();
+ASTNode* parse_function_declaration();
+ASTNode* parse_parameters();
