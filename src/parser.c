@@ -17,14 +17,34 @@ int token_position = 0;
 
 //---------------Functions to recieve Tokens and operate with Tokens
 Token mock_tokens[] = {
+    // First statement: const x = 5 + p;
     { "const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, {0, NULL}, 1 },       // const keyword
     { "x", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 1 },                        // Identifier 'x'
-    { ":", TOKEN_TYPE_COLON, {.i32 = 0}, {0, NULL}, 1 },                             // Colon ':'
-    { "u8", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_U8}, {0, NULL}, 1 },             // Keyword 'u8' (8-bit unsigned integer type)
     { "=", TOKEN_TYPE_ASSIGN, {.i32 = 0}, {0, NULL}, 1 },                            // Assignment '='
     { "5", TOKEN_TYPE_INT32, {.i32 = 5}, {0, NULL}, 1 },                             // Integer literal '5'
+    { "+", TOKEN_TYPE_PLUS, {.i32 = 0}, {0, NULL}, 1 },                              // Plus '+'
+    { "p", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 1 },                        // Identifier 'p'
     { ";", TOKEN_TYPE_SEMICOLON, {.i32 = 0}, {0, NULL}, 1 },                         // Semicolon ';'
-    { "", TOKEN_TYPE_EOF, {.i32 = 0}, {0, NULL}, 1 }                                 // End of file (EOF)
+
+    // Second statement: var y = p * 3;
+    { "var", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_VAR}, {0, NULL}, 2 },           // var keyword
+    { "y", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 2 },                        // Identifier 'y'
+    { "=", TOKEN_TYPE_ASSIGN, {.i32 = 0}, {0, NULL}, 2 },                            // Assignment '='
+    { "p", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 2 },                        // Identifier 'p'
+    { "*", TOKEN_TYPE_MUL, {.i32 = 0}, {0, NULL}, 2 },                               // Multiplication '*'
+    { "3", TOKEN_TYPE_INT32, {.i32 = 3}, {0, NULL}, 2 },                             // Integer literal '3'
+    { ";", TOKEN_TYPE_SEMICOLON, {.i32 = 0}, {0, NULL}, 2 },                         // Semicolon ';'
+
+    { "var", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_VAR}, {0, NULL}, 2 },           // var keyword
+    { "y", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 2 },                        // Identifier 'y'
+    { "=", TOKEN_TYPE_ASSIGN, {.i32 = 0}, {0, NULL}, 2 },                            // Assignment '='
+    { "p", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 2 },                        // Identifier 'p'
+    { "*", TOKEN_TYPE_MUL, {.i32 = 0}, {0, NULL}, 2 },                               // Multiplication '*'
+    { "3", TOKEN_TYPE_INT32, {.i32 = 3}, {0, NULL}, 2 },                             // Integer literal '3'
+    { ";", TOKEN_TYPE_SEMICOLON, {.i32 = 0}, {0, NULL}, 2 },                         // Semicolon ';'
+
+    // End of tokens (EOF)
+    { "", TOKEN_TYPE_EOF, {.i32 = 0}, {0, NULL}, 2 }                                 // End of file
 };
 
 Token get_token() {
@@ -233,47 +253,48 @@ ASTNode* parse_parameters()
 ASTNode* parse_const_declaration()
 {
     printf("found const\n");
-    return parse_declaration();
+    return parse_declaration(NODE_CONST_DECLARATION);
 }
 
 ASTNode* parse_var_declaration()
 {
     printf("found var\n");
-    return parse_declaration();;
+    return parse_declaration(NODE_VAR_DECLARATION);
 }
 
-ASTNode* parse_declaration()
+ASTNode* parse_declaration(NodeType type)
 {
-    ASTNode* const_decl = new_ast_node(NODE_CONST_DECLARATION,current_token.lexeme);    //upravit pre var_dec
+    ASTNode* decl = new_ast_node(type,current_token.lexeme);    //upravit pre var_dec
     advance_token();
     ASTNode* identifier = new_ast_node(NODE_IDENTIFIER,current_token.lexeme );
     ASTNode* data_type = NULL;
-    const_decl->right = identifier;
+    decl->right = identifier;
 
     if(!match(TOKEN_TYPE_IDENTIFIER)){
         current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     printf("found id\n");
-    
-    if(match(TOKEN_TYPE_COLON) == 0){  //Pokial sa vyskytne ':' musi nasledovat typ
-        printf("Found :");
+
+    if(match(TOKEN_TYPE_COLON)){  //Pokial sa vyskytne ':' musi nasledovat typ
+        printf("Found :\n");
+        char* data_name = current_token.lexeme;
         if(match(TOKEN_TYPE_FLOAT64)){
-            data_type = new_ast_node(NODE_FLOAT64,current_token.lexeme);
+            data_type = new_ast_node(NODE_FLOAT64,data_name);
         }
         else if (match(TOKEN_TYPE_U8)){
-            printf("Found u8");
-            data_type = new_ast_node(NODE_U8,current_token.lexeme);
+            printf("Found u8\n");
+            data_type = new_ast_node(NODE_U8,data_name);
         }
         else if (match(TOKEN_TYPE_INT32)){
-            data_type = new_ast_node(NODE_INT32,current_token.lexeme);
+            data_type = new_ast_node(NODE_INT32,data_name);
         }
         else{
             current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
         }
-        const_decl->left = data_type;
+        decl->left = data_type;
     }
 
-    if(match(TOKEN_TYPE_SEMICOLON)) return const_decl;  //V tomto pripade deklaracia konci
+    if(match(TOKEN_TYPE_SEMICOLON)) return decl;  //V tomto pripade deklaracia konci
 
 
     if(!match(TOKEN_TYPE_ASSIGN)){
@@ -290,7 +311,7 @@ ASTNode* parse_declaration()
 
     if(current_token.Error.code == PARSER_ERROR_SYNTAX) return NULL;
     
-    return const_decl;
+    return decl;
 }
 
 ASTNode* parse_program() {
@@ -331,13 +352,19 @@ ASTNode* parse_code_block() {
 
 ASTNode* parse_statement()
 {
+    ASTNode* statement_node = new_ast_node(NODE_STATEMENT, "statement");
     switch (current_token.type)
     {
     case TOKEN_TYPE_KEYWORD:
         switch (current_token.attribute.keyword)
         {
         case KEYWORD_CONST:
-            return parse_const_declaration();
+            statement_node->left = parse_const_declaration();
+            return statement_node;
+            break;
+        case KEYWORD_VAR:
+            statement_node->left = parse_var_declaration();
+            return statement_node;
             break;
         default:
             current_token.Error.code = PARSER_ERROR_SYNTAX;
