@@ -17,14 +17,18 @@ int token_position = 0;
 
 //---------------Functions to recieve Tokens and operate with Tokens
 Token mock_tokens[] = {
-    {.lexeme = "const", .type = TOKEN_TYPE_KEYWORD, .attribute.keyword = KEYWORD_CONST},
-    {.lexeme = "x", .type = TOKEN_TYPE_IDENTIFIER},
-    {.lexeme = "=", .type = TOKEN_TYPE_ASSIGN},
-    {.lexeme = "a", .type = TOKEN_TYPE_IDENTIFIER},
-    {.lexeme = ";", .type = TOKEN_TYPE_SEMICOLON},
-    {.lexeme = "", .type = TOKEN_TYPE_EOF}
-    //{.lexeme = "+", .type = TOKEN_TYPE_PLUS},
-    //{.lexeme = "5", .type = TOKEN_TYPE_INT32, .attribute.i32 = 5},
+    { "const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, {0, NULL}, 1 },       // const keyword
+    { "x", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 1 },                        // Identifier 'x'
+    { "=", TOKEN_TYPE_ASSIGN, {.i32 = 0}, {0, NULL}, 1 },                            // Assignment '='
+    { "5", TOKEN_TYPE_INT32, {.i32 = 5}, {0, NULL}, 1 },                             // Integer '5'
+    { "+", TOKEN_TYPE_PLUS, {.i32 = 0}, {0, NULL}, 1 },                              // Plus '+'
+    { "(", TOKEN_TYPE_LEFT_BRACKET, {.i32 = 0}, {0, NULL}, 1 },                      // Left bracket '('
+    { "2", TOKEN_TYPE_INT32, {.i32 = 2}, {0, NULL}, 1 },                             // Integer '2'
+    { "*", TOKEN_TYPE_MUL, {.i32 = 0}, {0, NULL}, 1 },                               // Multiplication '*'
+    { "a", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 1 },                        // Identifier 'a'
+    { ")", TOKEN_TYPE_RIGHT_BRACKET, {.i32 = 0}, {0, NULL}, 1 },                     // Right bracket ')'
+    { ";", TOKEN_TYPE_SEMICOLON, {.i32 = 0}, {0, NULL}, 1 },                         // Semicolon ';'
+    { "", TOKEN_TYPE_EOF, {.i32 = 0}, {0, NULL}, 1 }                                 // End of file
 };
 
 Token get_token() {
@@ -104,9 +108,17 @@ ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right) {
 ASTNode* parse_factor(){
 
     char* lexeme = current_token.lexeme;
-    if(match(TOKEN_TYPE_IDENTIFIER) || match(TOKEN_TYPE_FLOAT64) || match(TOKEN_TYPE_INT32)){
-        printf("Found id or number\n"); 
+    if(match(TOKEN_TYPE_IDENTIFIER)){
+        printf("Found id\n"); 
         return new_ast_node(NODE_IDENTIFIER,lexeme);
+    }
+    else if(match(TOKEN_TYPE_FLOAT64)){
+        printf("Found float\n");
+        return new_ast_node(NODE_FLOAT64,lexeme);
+    }
+    else if(match(TOKEN_TYPE_INT32)){
+        printf("Found integer\n");
+        return new_ast_node(NODE_INT32,lexeme);
     }
     else if(match(TOKEN_TYPE_LEFT_BRACKET)){
 
@@ -126,11 +138,13 @@ ASTNode* parse_factor(){
 }
 
 ASTNode* parse_term(){
-     ASTNode* left = parse_factor();
+    ASTNode* left = parse_factor();
     if (!left) return NULL; // If we found an error
 
-    while (match(TOKEN_TYPE_MUL) || match(TOKEN_TYPE_DIV)) {
+    while (current_token.type == TOKEN_TYPE_MUL || current_token.type == TOKEN_TYPE_DIV) {
+        advance_token();
         char* op = current_token.lexeme; // Get the operator
+        printf("found: %s\n", op);
         ASTNode* right = parse_factor(); // Parse the next factor
         if (!right) return NULL; // Check for errors
         
@@ -144,8 +158,10 @@ ASTNode* parse_expression(){
     ASTNode* left = parse_term();
     if (!left) return NULL;
 
-    while (match(TOKEN_TYPE_MINUS) || match(TOKEN_TYPE_PLUS)) {
+    while (current_token.type == TOKEN_TYPE_MINUS || current_token.type == TOKEN_TYPE_PLUS) {
         char* op = current_token.lexeme; // Get the operator
+        printf("found: %s\n", op);
+        advance_token();
         ASTNode* right = parse_term(); // Parse the next term
         if (!right) return NULL; // Check for errors
         // Create a binary operation node
