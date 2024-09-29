@@ -10,6 +10,7 @@
 #include "AST.h"
 #include<string.h>
 #include<stdlib.h>
+#include<stdbool.h>
 
 Token get_token(); //Lexer vrati TOKEN todo ASAP
 Token peek_token();
@@ -27,7 +28,7 @@ ASTNode* parse_fn_declaration();
 ASTNode* parse_fn_body();
 
 ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right);
-void print_ast(ASTNode* node, int depth);
+void print_ast(ASTNode* node, int depth, bool is_left);
 
 ASTNode* parse_expression();
 ASTNode* parse_term();
