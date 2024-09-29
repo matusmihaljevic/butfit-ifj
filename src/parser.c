@@ -103,9 +103,10 @@ ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right) {
 //Expression handling
 ASTNode* parse_factor(){
 
+    char* lexeme = current_token.lexeme;
     if(match(TOKEN_TYPE_IDENTIFIER) || match(TOKEN_TYPE_FLOAT64) || match(TOKEN_TYPE_INT32)){
         printf("Found id or number\n"); 
-        return new_ast_node(NODE_IDENTIFIER,current_token.lexeme);
+        return new_ast_node(NODE_IDENTIFIER,lexeme);
     }
     else if(match(TOKEN_TYPE_LEFT_BRACKET)){
 
@@ -235,7 +236,10 @@ ASTNode* parse_var_declaration()
 
 ASTNode* parse_declaration()
 {
-    ASTNode* const_decl = new_ast_node(NODE_CONST_DECLARATION,current_token.lexeme);
+    ASTNode* const_decl = new_ast_node(NODE_CONST_DECLARATION,"const_declaration");
+    ASTNode* identifier = new_ast_node(NODE_IDENTIFIER,current_token.lexeme );
+    ASTNode* data_type = NULL;
+    const_decl->right = identifier;
 
     if(!match(TOKEN_TYPE_IDENTIFIER)){
         current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
@@ -244,23 +248,35 @@ ASTNode* parse_declaration()
     
 
     if(match(TOKEN_TYPE_COLON)){  //Pokial sa vyskytne ':' musi nasledovat typ
-        if(!match(!match(TOKEN_TYPE_FLOAT64) || !match(TOKEN_TYPE_U8) || !match(TOKEN_TYPE_INT32))){
+        if(match(TOKEN_TYPE_FLOAT64)){
+            data_type = new_ast_node(NODE_FLOAT64,current_token.lexeme);
+        }
+        else if (match(TOKEN_TYPE_U8)){
+            data_type = new_ast_node(NODE_U8,current_token.lexeme);
+        }
+        else if (match(TOKEN_TYPE_INT32)){
+            data_type = new_ast_node(NODE_INT32,current_token.lexeme);
+        }
+        else{
             current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
         }
+        const_decl->left = data_type;
     }
 
     if(match(TOKEN_TYPE_SEMICOLON)) return const_decl;  //V tomto pripade deklaracia konci
 
+
     if(!match(TOKEN_TYPE_ASSIGN)){
         current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
+    //funkcia assign---------------
+    ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"="); 
+    identifier->right = assignment;
     printf("found =\n");
-
     ASTNode* expr = parse_expression();
     if(!expr) return NULL;
-
-    const_decl->left = expr;
-    const_decl->right = NULL;   //datovy typ
+    assignment->left = new_ast_node(NODE_IDENTIFIER,identifier->lexeme);
+    assignment->right = expr;
 
     if(current_token.Error.code == PARSER_ERROR_SYNTAX) return NULL;
     
@@ -284,6 +300,7 @@ ASTNode* parse_code_block() {
         current_statement = parse_statement();
         if(current_statement != NULL)
         if (current_statement) {
+            
             if (last_statement) {
                 last_statement->right = current_statement; // Link statements
             } else {
