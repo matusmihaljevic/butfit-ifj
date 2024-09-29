@@ -19,16 +19,12 @@ int token_position = 0;
 Token mock_tokens[] = {
     { "const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, {0, NULL}, 1 },       // const keyword
     { "x", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 1 },                        // Identifier 'x'
+    { ":", TOKEN_TYPE_COLON, {.i32 = 0}, {0, NULL}, 1 },                             // Colon ':'
+    { "u8", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_U8}, {0, NULL}, 1 },             // Keyword 'u8' (8-bit unsigned integer type)
     { "=", TOKEN_TYPE_ASSIGN, {.i32 = 0}, {0, NULL}, 1 },                            // Assignment '='
-    { "5", TOKEN_TYPE_INT32, {.i32 = 5}, {0, NULL}, 1 },                             // Integer '5'
-    { "+", TOKEN_TYPE_PLUS, {.i32 = 0}, {0, NULL}, 1 },                              // Plus '+'
-    { "(", TOKEN_TYPE_LEFT_BRACKET, {.i32 = 0}, {0, NULL}, 1 },                      // Left bracket '('
-    { "2", TOKEN_TYPE_INT32, {.i32 = 2}, {0, NULL}, 1 },                             // Integer '2'
-    { "*", TOKEN_TYPE_MUL, {.i32 = 0}, {0, NULL}, 1 },                               // Multiplication '*'
-    { "a", TOKEN_TYPE_IDENTIFIER, {.i32 = 0}, {0, NULL}, 1 },                        // Identifier 'a'
-    { ")", TOKEN_TYPE_RIGHT_BRACKET, {.i32 = 0}, {0, NULL}, 1 },                     // Right bracket ')'
+    { "5", TOKEN_TYPE_INT32, {.i32 = 5}, {0, NULL}, 1 },                             // Integer literal '5'
     { ";", TOKEN_TYPE_SEMICOLON, {.i32 = 0}, {0, NULL}, 1 },                         // Semicolon ';'
-    { "", TOKEN_TYPE_EOF, {.i32 = 0}, {0, NULL}, 1 }                                 // End of file
+    { "", TOKEN_TYPE_EOF, {.i32 = 0}, {0, NULL}, 1 }                                 // End of file (EOF)
 };
 
 Token get_token() {
@@ -142,8 +138,8 @@ ASTNode* parse_term(){
     if (!left) return NULL; // If we found an error
 
     while (current_token.type == TOKEN_TYPE_MUL || current_token.type == TOKEN_TYPE_DIV) {
-        advance_token();
         char* op = current_token.lexeme; // Get the operator
+        advance_token();
         printf("found: %s\n", op);
         ASTNode* right = parse_factor(); // Parse the next factor
         if (!right) return NULL; // Check for errors
@@ -237,22 +233,19 @@ ASTNode* parse_parameters()
 ASTNode* parse_const_declaration()
 {
     printf("found const\n");
-    advance_token();    //skip const
     return parse_declaration();
 }
 
 ASTNode* parse_var_declaration()
 {
-    if(!match((current_token.attribute.keyword == KEYWORD_VAR) && !match(TOKEN_TYPE_KEYWORD))){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
-    }
-    parse_declaration();
-    return NULL;
+    printf("found var\n");
+    return parse_declaration();;
 }
 
 ASTNode* parse_declaration()
 {
-    ASTNode* const_decl = new_ast_node(NODE_CONST_DECLARATION,"const_declaration");
+    ASTNode* const_decl = new_ast_node(NODE_CONST_DECLARATION,current_token.lexeme);    //upravit pre var_dec
+    advance_token();
     ASTNode* identifier = new_ast_node(NODE_IDENTIFIER,current_token.lexeme );
     ASTNode* data_type = NULL;
     const_decl->right = identifier;
@@ -262,12 +255,13 @@ ASTNode* parse_declaration()
     }
     printf("found id\n");
     
-
-    if(match(TOKEN_TYPE_COLON)){  //Pokial sa vyskytne ':' musi nasledovat typ
+    if(match(TOKEN_TYPE_COLON) == 0){  //Pokial sa vyskytne ':' musi nasledovat typ
+        printf("Found :");
         if(match(TOKEN_TYPE_FLOAT64)){
             data_type = new_ast_node(NODE_FLOAT64,current_token.lexeme);
         }
         else if (match(TOKEN_TYPE_U8)){
+            printf("Found u8");
             data_type = new_ast_node(NODE_U8,current_token.lexeme);
         }
         else if (match(TOKEN_TYPE_INT32)){
@@ -359,22 +353,34 @@ ASTNode* parse_statement()
     return NULL;
 }
 
-void print_ast(ASTNode* node, int depth) {
+void print_ast(ASTNode* node, int depth, bool is_left) {
     if (!node) return;
 
-    // Print current node
-    for (int i = 0; i < depth; ++i) printf("  "); // Indent based on depth
+    // Print indentation
+    for (int i = 0; i < depth; ++i) {
+        if (i == depth - 1) {
+            // If it's the last level, print a branch (├── for left, └── for right)
+            printf(is_left ? "├── " : "└── ");
+        } else {
+            // Print vertical lines for connecting branches
+            printf("    ");
+        }
+    }
+
+    // Print current node details
     printf("Node Type: %d, Lexeme: %s\n", node->type, node->lexeme ? node->lexeme : "NULL");
 
-    // Recur on left and right
-    print_ast(node->left, depth + 1);
-    print_ast(node->right, depth + 1);
+    // Recur for the left child, with proper branch marking
+    if (node->left || node->right) { // If there are children, print them
+        print_ast(node->left, depth + 1, true);  // Left child, true -> it’s a left node
+        print_ast(node->right, depth + 1, false); // Right child, false -> it’s a right node
+    }
 }
 
 int main()
 {
     current_token = get_token();
     root = parse_program();
-    print_ast(root, 0);
+    print_ast(root, 0,false);
     return 0;
 }
