@@ -1,14 +1,7 @@
 /**
  * @file parser.h
- * 
- * Syntaktický analyzátor 
- * 
- * IFJ Projekt 2024
- * 
- * @author <xbojnaa00> Adam Bojnanský
- * @author <xmihalm00> Matúš Mihaljevič
- * @author <xpribik00> Kristián Pribila
- * @author <xpodmaj00> Jaroslav Podmajerský
+ * @brief Error definitions.
+ * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
 #include"parser.h"
@@ -16,20 +9,22 @@
 
 Token current_token;
 Token lookahead_token;
+ASTNode* root = NULL;
 
 int lookahead_count = 0;
 int token_position = 0;
 
 
-//Functions to recieve Tokens and operate with Tokens
+//---------------Functions to recieve Tokens and operate with Tokens
 Token mock_tokens[] = {
     {.lexeme = "const", .type = TOKEN_TYPE_KEYWORD, .attribute.keyword = KEYWORD_CONST},
     {.lexeme = "x", .type = TOKEN_TYPE_IDENTIFIER},
     {.lexeme = "=", .type = TOKEN_TYPE_ASSIGN},
     {.lexeme = "a", .type = TOKEN_TYPE_IDENTIFIER},
-    {.lexeme = "+", .type = TOKEN_TYPE_PLUS},
-    {.lexeme = "5", .type = TOKEN_TYPE_INT32, .attribute.i32 = 5},
-    {.lexeme = ";", .type = TOKEN_TYPE_SEMICOLON}
+    {.lexeme = ";", .type = TOKEN_TYPE_SEMICOLON},
+    {.lexeme = "", .type = TOKEN_TYPE_EOF}
+    //{.lexeme = "+", .type = TOKEN_TYPE_PLUS},
+    //{.lexeme = "5", .type = TOKEN_TYPE_INT32, .attribute.i32 = 5},
 };
 
 Token get_token() {
@@ -84,160 +79,269 @@ void destroy_lookahead() {
     }
 }
 
+//---------------Functions to create AST
+
+ASTNode* new_ast_node(NodeType type, char* lexeme) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = type;
+    node->lexeme = lexeme;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right) {
+    ASTNode* node = new_ast_node(NODE_BINARY_OP, op);
+    node->left = left; // Set the left child
+    node->right = right; // Set the right child
+    return node;
+}
+
 
 //Grammar of the Language
 
 //Expression handling
-void parse_factor(){
+ASTNode* parse_factor(){
 
     if(match(TOKEN_TYPE_IDENTIFIER) || match(TOKEN_TYPE_FLOAT64) || match(TOKEN_TYPE_INT32)){
-        printf("Found id or number\n");
-        return;
+        printf("Found id or number\n"); 
+        return new_ast_node(NODE_IDENTIFIER,current_token.lexeme);
     }
     else if(match(TOKEN_TYPE_LEFT_BRACKET)){
+
         printf("Found left P\n");
-        parse_expression();
+        ASTNode* expr = parse_expression();
         if(!match(TOKEN_TYPE_RIGHT_BRACKET)){
-            current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+            current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
         }
         printf("Found right P\n");
+        return expr;
     }
     else{
         printf("found err\n");
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
-    
+    return NULL;
 }
 
-void parse_term(){
-    parse_factor();
-    if (match(TOKEN_TYPE_MUL) || match(TOKEN_TYPE_DIV)){   
-        printf("Found operator * or /\n");
-        parse_factor();
+ASTNode* parse_term(){
+     ASTNode* left = parse_factor();
+    if (!left) return NULL; // If we found an error
+
+    while (match(TOKEN_TYPE_MUL) || match(TOKEN_TYPE_DIV)) {
+        char* op = current_token.lexeme; // Get the operator
+        ASTNode* right = parse_factor(); // Parse the next factor
+        if (!right) return NULL; // Check for errors
+        
+        // Create a binary operation node
+        left = create_binary_op_node(left, op, right);
     }
-    
+    return left; // Return the result of the term
 }
 
-void parse_expression(){
-    parse_term();
-    if (match(TOKEN_TYPE_MINUS) || match(TOKEN_TYPE_PLUS)){
-        printf("Found operator + or -\n");
-        parse_term();
+ASTNode* parse_expression(){
+    ASTNode* left = parse_term();
+    if (!left) return NULL;
+
+    while (match(TOKEN_TYPE_MINUS) || match(TOKEN_TYPE_PLUS)) {
+        char* op = current_token.lexeme; // Get the operator
+        ASTNode* right = parse_term(); // Parse the next term
+        if (!right) return NULL; // Check for errors
+        // Create a binary operation node
+        left = create_binary_op_node(left, op, right);
     }
-    
+    return left;
 }
 
 //Declaration handling
-void parse_function_declaration()
+
+ASTNode* parse_function_declaration()
 {
     if((current_token.attribute.keyword != KEYWORD_PUB) && !match(TOKEN_TYPE_KEYWORD)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     if(!match((current_token.attribute.keyword != KEYWORD_FN) && !match(TOKEN_TYPE_KEYWORD))){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     if(!match(TOKEN_TYPE_IDENTIFIER)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     if(!match(TOKEN_TYPE_LEFT_BRACKET)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
 
     parse_parameters();
     
     if(!match(TOKEN_TYPE_RIGHT_BRACKET)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
 
     //Telo funkcie
     
     if (!match(TOKEN_TYPE_LEFT_BRACE)) {
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
-        return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     
     //BODY OF THE FUNCTION
 
     if (!match(TOKEN_TYPE_RIGHT_BRACE)) {
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
-        return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
-
+    return NULL;
 }
 
-void parse_parameters()
+ASTNode* parse_parameters()
 {
-    if(match(TOKEN_TYPE_RIGHT_BRACKET))return;
+    if(match(TOKEN_TYPE_RIGHT_BRACKET))return NULL;
     
     if(!match(TOKEN_TYPE_IDENTIFIER)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     if (!match(TOKEN_TYPE_COLON)) {
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     if (!match(!match(TOKEN_TYPE_FLOAT64) || !match(TOKEN_TYPE_U8) || !match(TOKEN_TYPE_INT32))) {
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     while (match(TOKEN_TYPE_COMMA)) {
         if (!match(TOKEN_TYPE_IDENTIFIER)) {
-            current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+            current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
         }
         if (!match(TOKEN_TYPE_COLON)) {
-            current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+            current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
         }
         if (!match(TOKEN_TYPE_FLOAT64) || !match(TOKEN_TYPE_U8) || !match(TOKEN_TYPE_INT32)) {
-            current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+            current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
         }
     }
+    return NULL;
 }
 
-void parse_const_declaration()
+ASTNode* parse_const_declaration()
 {
-    if((current_token.attribute.keyword == KEYWORD_CONST) && !match(TOKEN_TYPE_KEYWORD)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
-    }
     printf("found const\n");
-    parse_declaration();
+    advance_token();    //skip const
+    return parse_declaration();
 }
 
-void parse_var_declaration()
+ASTNode* parse_var_declaration()
 {
     if(!match((current_token.attribute.keyword == KEYWORD_VAR) && !match(TOKEN_TYPE_KEYWORD))){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     parse_declaration();
+    return NULL;
 }
 
-void parse_declaration()
+ASTNode* parse_declaration()
 {
-    if(!match(TOKEN_TYPE_IDENTIFIER)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
-    }
+    ASTNode* const_decl = new_ast_node(NODE_CONST_DECLARATION,current_token.lexeme);
 
+    if(!match(TOKEN_TYPE_IDENTIFIER)){
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
+    }
     printf("found id\n");
+    
+
     if(match(TOKEN_TYPE_COLON)){  //Pokial sa vyskytne ':' musi nasledovat typ
         if(!match(!match(TOKEN_TYPE_FLOAT64) || !match(TOKEN_TYPE_U8) || !match(TOKEN_TYPE_INT32))){
-            current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+            current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
         }
     }
-    if(match(TOKEN_TYPE_SEMICOLON)) return;  //V tomto pripade deklaracia konci
+
+    if(match(TOKEN_TYPE_SEMICOLON)) return const_decl;  //V tomto pripade deklaracia konci
 
     if(!match(TOKEN_TYPE_ASSIGN)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
+        current_token.Error.code = PARSER_ERROR_SYNTAX; return NULL;
     }
     printf("found =\n");
-    parse_expression();
-    if(current_token.Error.code == PARSER_ERROR_SYNTAX) return;
-    if(!match(TOKEN_TYPE_SEMICOLON)){
-        current_token.Error.code = PARSER_ERROR_SYNTAX; return;
-    }
+
+    ASTNode* expr = parse_expression();
+    if(!expr) return NULL;
+
+    const_decl->left = expr;
+    const_decl->right = NULL;   //datovy typ
+
+    if(current_token.Error.code == PARSER_ERROR_SYNTAX) return NULL;
+    
+    return const_decl;
 }
 
+ASTNode* parse_program() {
+    root = new_ast_node(NODE_PROGRAM,"Program");
+    root->right = parse_code_block(); // Parse the first code block
+    return root;
+}
+
+ASTNode* parse_code_block() {
+    ASTNode* code_block = new_ast_node(NODE_CODE,"code_block");
+
+    ASTNode* current_statement = NULL;
+    ASTNode* last_statement = NULL;
+
+    while (current_token.type != TOKEN_TYPE_EOF) {
+        // Parse a statement
+        current_statement = parse_statement();
+        if(current_statement != NULL)
+        if (current_statement) {
+            if (last_statement) {
+                last_statement->right = current_statement; // Link statements
+            } else {
+                code_block->left = current_statement; // First statement
+            }
+            last_statement = current_statement; // Update last statement
+        }
+        // Check for a statement terminator (e.g., semicolon)
+        if(match(TOKEN_TYPE_SEMICOLON)) printf("Found ;\n");
+
+        if (current_token.type == TOKEN_TYPE_EOF || current_token.type == TOKEN_TYPE_RIGHT_BRACE) {
+            printf("found EOF\n");
+            break; // Exit loop on end of code block
+        }        
+    }
+    return code_block;
+}
+
+ASTNode* parse_statement()
+{
+    switch (current_token.type)
+    {
+    case TOKEN_TYPE_KEYWORD:
+        switch (current_token.attribute.keyword)
+        {
+        case KEYWORD_CONST:
+            return parse_const_declaration();
+            break;
+        default:
+            current_token.Error.code = PARSER_ERROR_SYNTAX;
+            break;
+        }
+        break;
+    
+    default:
+        current_token.Error.code = PARSER_ERROR_SYNTAX;
+        break;
+    }
+
+    return NULL;
+}
+
+void print_ast(ASTNode* node, int depth) {
+    if (!node) return;
+
+    // Print current node
+    for (int i = 0; i < depth; ++i) printf("  "); // Indent based on depth
+    printf("Node Type: %d, Lexeme: %s\n", node->type, node->lexeme ? node->lexeme : "NULL");
+
+    // Recur on left and right
+    print_ast(node->left, depth + 1);
+    print_ast(node->right, depth + 1);
+}
 
 int main()
 {
     current_token = get_token();
-    parse_const_declaration();
-    if(current_token.Error.code != NO_ERROR) return current_token.Error.code;
+    root = parse_program();
+    print_ast(root, 0);
     return 0;
 }
