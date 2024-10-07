@@ -13,7 +13,12 @@
 #include "token.h"
 #include <stdio.h>
 
+#define INTERN_FUNCS_CNT 13
+#define ASCII_CONTROL_CHARS_VALUE 32
 
+/**
+ * @enum Finite state machine states.
+ */
 typedef enum
 {
     STATE_INITIAL,
@@ -24,6 +29,8 @@ typedef enum
     STATE_RIGHT_BRACKET,
     STATE_LEFT_BRACE,
     STATE_RIGHT_BRACE,
+    STATE_LSQUARE_BRACE,
+    STATE_RSQUARE_BRACE,
     STATE_COMMA,
     STATE_COLON,
     STATE_SEMICOLON,
@@ -37,6 +44,7 @@ typedef enum
     STATE_NOT_EQUAL,
     STATE_SLASH,
     STATE_BACKSLASH,
+    STATE_PIPE,
     STATE_LINE_COMMMENT,
     STATE_NUMBER,
     STATE_FLOAT,
@@ -45,14 +53,33 @@ typedef enum
     STATE_BIN,
     STATE_HEX,
     STATE_OCT,
-    STATE_STRING,
+    STATE_STRING_START,
+	STATE_STRING_END,
+	STATE_STRING_ESCAPE,
     STATE_MULTILINE_STRING,
     STATE_IDENTIFIER,
     STATE_KEYWORD,
 } State;
 
+/**
+ * @brief Array of internal functions used by IFJ24.
+ */
+char *intern_functions[] = {
+	"readstr", "readi32", "readf64",
+	"write",
+	"i2f", "f2i",
+	"string", "length", "concat", "substring", "strcmp",
+	"ord", "chr"
+};
+
+/**
+ * @brief Read the next token from the source file.
+ */
 int get_token(Token *token);
 
+/**
+ * @brief Set the source file to be scanned.
+ */
 void set_source_file(FILE *f);
 
 #endif //SCANNER_H
