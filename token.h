@@ -2,13 +2,13 @@
  * Project: Implementace překladače imperativního jazyka IFJ24.
  *
  * @file
- * @brief Error definitions.
+ * @brief Token definition.
  * @author Matúš Mihaljevič <xmihalm00@stud.fit.vutbr.cz>
  */
 
 
-#ifndef _TOKEN_H
-#define _TOKEN_H
+#ifndef TOKEN_H
+#define TOKEN_H
 
 /**
  * @enum Reserved keywords.
@@ -72,6 +72,7 @@ typedef enum
 	TOKEN_TYPE_SEMICOLON, // Semicolon ;
 	TOKEN_TYPE_QUESTION, // Question mark ?
 	TOKEN_TYPE_PIPE, // Pipe |
+	TOKEN_TYPE_BACKSLASH, // Backslash '\\'
 } Type;
 
 /**
@@ -97,4 +98,4 @@ typedef struct
     unsigned int line;
 } Token;
 
-#endif //_TOKEN_H
+#endif // TOKEN_H
