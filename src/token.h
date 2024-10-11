@@ -1,4 +1,6 @@
 /**
+ * Project: Implementace překladače imperativního jazyka IFJ24.
+ *
  * @file
  * @brief Error definitions.
  * @author Matúš Mihaljevič <xmihalm00@stud.fit.vutbr.cz>
@@ -19,13 +21,14 @@ typedef enum
     KEYWORD_IF,       // if
     KEYWORD_I32,      // i32
     KEYWORD_F64,      // f64
-    KEYWORD_U8,       // u8
+    KEYWORD_U8,       // []u8
     KEYWORD_NULL,     // null
     KEYWORD_PUB,      // pub
     KEYWORD_RETURN,   // return
     KEYWORD_VAR,      // var
     KEYWORD_VOID,     // void
-    KEYWORD_WHILE     // while
+    KEYWORD_WHILE,     // while
+    KEYWORD_IMPORT     // @import
 } Keyword;
 
 /**
@@ -37,16 +40,13 @@ typedef enum
 	TOKEN_TYPE_EOL, // End of line
 	TOKEN_TYPE_EMPTY, // Empty
 
-	TOKEN_TYPE_PUB, //
-	TOKEN_TYPE_FN, //
-
 	TOKEN_TYPE_IDENTIFIER, // Identifier
 	TOKEN_TYPE_KEYWORD, // Keyword
 	TOKEN_TYPE_INTERN, // Intern function
 
-	TOKEN_TYPE_INT32, // Integer number
-	TOKEN_TYPE_FLOAT64, // Double number
-	TOKEN_TYPE_U8, // String
+	TOKEN_TYPE_INT, // Integer number
+	TOKEN_TYPE_FLOAT, // Double number
+	TOKEN_TYPE_STRING, // String
 
 	TOKEN_TYPE_EQ, // Equal ==
 	TOKEN_TYPE_NEQ, // Not equal !=
@@ -70,34 +70,30 @@ typedef enum
 	TOKEN_TYPE_COLON, // Colon :
 	TOKEN_TYPE_DOT, // Dot .
 	TOKEN_TYPE_SEMICOLON, // Semicolon ;
-} Token_type;
+	TOKEN_TYPE_QUESTION, // Question mark ?
+	TOKEN_TYPE_PIPE, // Pipe |
+} Type;
 
 /**
  * @union Token attribute.
  */
 typedef union
 {
-    int i32; // Integer value.
-	Keyword keyword; // Keyword, one of the KEYWORD_... constant
-	double f64; // Decimal value.
-} Token_attribute;
+    int i32;
+	Keyword keyword;
+    char* string;
+	double f64;
+} Attribute;
 
-
-typedef struct
-{
-    unsigned int code;
-    char *message;
-} Token_error;
 
 /**
  * @struct Representation of a token.
  */
 typedef struct
 {
-    char *lexeme;
-	Token_type type; // Token type, one of token_type constants.
-	Token_attribute attribute; // Attribute of token.
-	Token_error Error; // Token error.
+	char *lexeme;
+	Type type;
+	Attribute attribute;
     unsigned int line;
 } Token;
 

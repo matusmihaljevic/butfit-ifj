@@ -7,10 +7,14 @@
 #pragma once
 
 #include "error.h"
+#include"token.h"
 #include "AST.h"
 #include<string.h>
 #include<stdlib.h>
 #include<stdbool.h>
+
+#define ARGS false
+#define PARAMS true
 
 Token get_token(); //Lexer vrati TOKEN todo ASAP
 Token peek_token();
@@ -18,23 +22,36 @@ void advance_token();
 void swap_token();
 void store_token();
 void take_token();
-int match(Token_type token_type);
+int match(Type token_type);
 void destroy_lookahead();
 
 ASTNode* parse_program();
-ASTNode* parse_code_block(); 
-ASTNode* parse_statement();
-ASTNode* parse_fn_declaration();
-ASTNode* parse_fn_body();
+ASTNode* parse_code_block(ASTNode* parent); 
+ASTNode* parse_statement(ASTNode* parent);
 
-ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right);
-void print_ast(ASTNode* node, int depth, bool is_left);
 
-ASTNode* parse_expression();
-ASTNode* parse_term();
-ASTNode* parse_factor();
+ASTNode* parse_fn_declaration(ASTNode* parent);
+ASTNode* parse_fn_body(ASTNode* parent);
+ASTNode* parse_prolog(ASTNode* parent);
+ASTNode* parse_assignment(char* id_lexeme, ASTNode* parent);
 
-ASTNode* parse_declaration();
-ASTNode* parse_const_declaration();
-ASTNode* parse_function_declaration();
-ASTNode* parse_parameters();
+//Expression parsing 
+ASTNode* parse_expression(ASTNode* parent);
+ASTNode* parse_term(ASTNode* parent);
+ASTNode* parse_factor(ASTNode* parent);
+
+ASTNode* parse_data_type(ASTNode* parent);
+ASTNode* parse_float64(ASTNode* parent);
+ASTNode* parse_int32(ASTNode* parent);
+ASTNode* parse_u8(ASTNode* parent);
+ASTNode* parse_id_op(ASTNode* parent);
+
+//Declaration
+ASTNode* parse_declaration(NodeType type, ASTNode* parent);
+ASTNode* parse_const_declaration(ASTNode* parent);
+ASTNode* parse_var_declaration(ASTNode* parent);
+
+//Function declaration
+ASTNode* parse_function_declaration(ASTNode* parent);
+ASTNode* parse_arguments(ASTNode* parent);
+ASTNode* parse_parameters(ASTNode* parent);

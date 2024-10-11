@@ -23,5 +23,9 @@ $(TARGET): $(SRC)
 clean:
 	rm -f $(TARGET)
 
-# Phony targets (don't create files named all or clean)
-.PHONY: all clean
+# Run rule to execute the parser
+run: $(TARGET)
+	./$(TARGET)
+
+# Phony targets (don't create files named all, clean, or run)
+.PHONY: all clean run
