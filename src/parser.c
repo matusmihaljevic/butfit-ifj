@@ -17,22 +17,61 @@ ASTNode* root = NULL;
 int lookahead_count = 0;
 int token_position = 0;
 
-
+//bar(foo(bar,5),5+3>x+bar(x),);
 //---------------Functions to recieve Tokens and operate with Tokens
 Token mock_tokens[] = {
-    {"bar", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
+    {"pub", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_PUB}, 1},
+    {"fn", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_FN}, 1},
+    {"foo", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
     {"(", TOKEN_TYPE_LEFT_BRACKET, {.string = NULL}, 1},
-    {"5", TOKEN_TYPE_INT, {.i32 = 5}, 1},
-    {",", TOKEN_TYPE_COMMA, {.string = NULL}, 1},
-    {"x", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
-    {",", TOKEN_TYPE_COMMA, {.string = NULL}, 1},
-    {"y", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
-    {",", TOKEN_TYPE_COMMA, {.string = NULL}, 1},
-    {"z", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
-    {"+", TOKEN_TYPE_PLUS, {.string = NULL}, 1},
-    {"z", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
+    {"par", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
+    {":", TOKEN_TYPE_COLON, {.string = NULL}, 1},
+    {"[]u8", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_U8}, 1},
+    {")", TOKEN_TYPE_RIGHT_BRACKET, {.string = NULL}, 1},
+    {"[]u8", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_U8}, 1},
+    {"{", TOKEN_TYPE_LEFT_BRACE, {.string = NULL}, 1},
+    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 2},
+    {"ret", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 2},
+    {"=", TOKEN_TYPE_ASSIGN, {.string = NULL}, 2},
+    {"bar", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 2},
+    {"(", TOKEN_TYPE_LEFT_BRACKET, {.string = NULL}, 2},
+    {"par", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 2},
+    {")", TOKEN_TYPE_RIGHT_BRACKET, {.string = NULL}, 2},
+    {";", TOKEN_TYPE_SEMICOLON, {.string = NULL}, 2},
+    {"return", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_RETURN}, 3},
+    {"ret", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 3},
+    {";", TOKEN_TYPE_SEMICOLON, {.string = NULL}, 3},
+    {"}", TOKEN_TYPE_RIGHT_BRACE, {.string = NULL}, 4},
+    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 1},
+    {"ifj", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
+    {"=", TOKEN_TYPE_ASSIGN, {.string = NULL}, 1},
+    {"@import", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_IMPORT}, 1},
+    {"(", TOKEN_TYPE_LEFT_BRACKET, {.string = NULL}, 1},
+    {"\"ifj24.zig\"", TOKEN_TYPE_STRING, {.string = "ifj24.zig"}, 1},
     {")", TOKEN_TYPE_RIGHT_BRACKET, {.string = NULL}, 1},
     {";", TOKEN_TYPE_SEMICOLON, {.string = NULL}, 1},
+    {"pub", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_PUB}, 1},
+    {"fn", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_FN}, 1},
+    {"bar", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
+    {"(", TOKEN_TYPE_LEFT_BRACKET, {.string = NULL}, 1},
+    {"param", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 1},
+    {":", TOKEN_TYPE_COLON, {.string = NULL}, 1},
+    {"[]u8", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_U8}, 1},
+    {")", TOKEN_TYPE_RIGHT_BRACKET, {.string = NULL}, 1},
+    {"[]u8", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_U8}, 1},
+    {"{", TOKEN_TYPE_LEFT_BRACE, {.string = NULL}, 1},
+    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 2},
+    {"r", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 2},
+    {"=", TOKEN_TYPE_ASSIGN, {.string = NULL}, 2},
+    {"foo", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 2},
+    {"(", TOKEN_TYPE_LEFT_BRACKET, {.string = NULL}, 2},
+    {"param", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 2},
+    {")", TOKEN_TYPE_RIGHT_BRACKET, {.string = NULL}, 2},
+    {";", TOKEN_TYPE_SEMICOLON, {.string = NULL}, 2},
+    {"return", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_RETURN}, 3},
+    {"r", TOKEN_TYPE_IDENTIFIER, {.string = NULL}, 3},
+    {";", TOKEN_TYPE_SEMICOLON, {.string = NULL}, 3},
+    {"}", TOKEN_TYPE_RIGHT_BRACE, {.string = NULL}, 4},
     {"",TOKEN_TYPE_EOF,{.string = NULL},1}
 };
 
@@ -92,6 +131,12 @@ ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right, ASTNode*
     return node;
 }
 
+void free_ast(ASTNode *node) {
+    if (node == NULL) return;
+    free_ast(node->left);
+    free_ast(node->right);
+    free(node);
+}
 
 //Grammar and node creation
 
@@ -211,6 +256,27 @@ ASTNode* parse_expression(ASTNode* parent){
     return left;
 }
 
+ASTNode* parse_relation_expression(ASTNode* parent){
+    ASTNode* left = parse_expression(parent);
+    if(!left) return NULL;
+    //doplnit vsetky relacne
+    while (current_token.type == TOKEN_TYPE_LTN || current_token.type == TOKEN_TYPE_MTN ||
+           current_token.type == TOKEN_TYPE_MEQ || current_token.type == TOKEN_TYPE_LEQ ||
+           current_token.type == TOKEN_TYPE_EQ || current_token.type == TOKEN_TYPE_NEQ) {
+        
+        char* op = current_token.lexeme; // Get the operator
+        advance_token();
+        ASTNode* right = parse_expression(parent); // Parse the next expression
+        if (!right) return NULL; // Check for errors
+        // Create a binary operation node
+        ASTNode* binary_op_node = create_binary_op_node(left, op, right,parent);
+        left->parent = binary_op_node;
+        right->parent = binary_op_node;
+        left = binary_op_node;
+    }
+    return left;
+}
+
 //Function declaration
 ASTNode* parse_function_declaration(ASTNode* parent)
 {
@@ -219,17 +285,14 @@ ASTNode* parse_function_declaration(ASTNode* parent)
         error(PARSER_ERROR_SYNTAX);
     }
     advance_token();
-    printf("Found: pub\n");
     if(current_token.attribute.keyword != KEYWORD_FN){
         error(PARSER_ERROR_SYNTAX);
     }
     advance_token();
-    printf("Found: fn\n");
     ASTNode* function_id = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,function_decl);
     if(!match(TOKEN_TYPE_IDENTIFIER)){
         error(PARSER_ERROR_SYNTAX);
     }
-    printf("Found: id\n");
     if(!match(TOKEN_TYPE_LEFT_BRACKET)){
         error(PARSER_ERROR_SYNTAX);
     }
@@ -253,51 +316,58 @@ ASTNode* parse_function_declaration(ASTNode* parent)
     return function_decl;
 }
 
+ASTNode* parse_return(ASTNode* parent){
+    advance_token();    //skip return token
+    ASTNode* return_statement = new_ast_node(NODE_RETURN,"return",parent);
+    return_statement->left = parse_relation_expression(return_statement);
+    return return_statement;
+}
+
 ASTNode* parse_arguments(ASTNode* parent){
     ASTNode* current_argument = new_ast_node(NODE_ARGUMENT,"argument",parent);
     ASTNode* last_argument = NULL;
-    ASTNode* arguments = NULL;
+    ASTNode* return_arguments = NULL;      //arguments to send
     if(match(TOKEN_TYPE_RIGHT_BRACKET)) return NULL;
-    current_argument->left = parse_expression(current_argument);
-    arguments = current_argument;
+    current_argument->left = parse_relation_expression(current_argument);
+    return_arguments = current_argument;
     while (current_token.type == TOKEN_TYPE_COMMA)
     {
         advance_token();    //skip comma
         if(current_token.type == TOKEN_TYPE_RIGHT_BRACKET) break;   //ciarka moze ale nemusi byt, ak nasleduje ) potom break
         last_argument = current_argument;
         current_argument = new_ast_node(NODE_ARGUMENT,"argument",last_argument);
-        current_argument->left = parse_expression(current_argument);
+        current_argument->left = parse_relation_expression(current_argument);
         last_argument->right = current_argument;
     }
     
-    return arguments;
+    return return_arguments;
 }
 
 ASTNode* parse_parameters(ASTNode* parent){       
-    ASTNode* return_PA = NULL;
-    //pripad () vrat NULL
+    ASTNode* return_param = NULL;
+    ASTNode* current_param = NULL;
+    ASTNode* last_param = NULL;
     if(match(TOKEN_TYPE_RIGHT_BRACKET))return NULL;
-    
-    //parametre
-    //prvy parameter
-    return_PA = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,parent);
-    
-    if(!match(TOKEN_TYPE_IDENTIFIER)){
-        error(PARSER_ERROR_SYNTAX);
-    }
-    //ak sa jedna o parametre musi nasledovat ':'
-    if (!match(TOKEN_TYPE_COLON)) {
-        error(PARSER_ERROR_SYNTAX);
-    }
+    current_param = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,parent);
+    if(!match(TOKEN_TYPE_IDENTIFIER))error(PARSER_ERROR_SYNTAX);
+    if (!match(TOKEN_TYPE_COLON))error(PARSER_ERROR_SYNTAX);
     //nasleduje datovy typ
-    return_PA->left = parse_data_type(return_PA);
-
-    //n-pocet parametrov doriesit potom !!!!!!!!
-
-    //while (match(TOKEN_TYPE_COMMA)) {
-    //    
-    //}
-    return return_PA;
+    current_param->left = parse_data_type(current_param);
+    return_param = current_param;
+    
+    while (current_token.type == TOKEN_TYPE_COMMA)
+    {
+        advance_token();    //skip comma
+        if(current_token.type == TOKEN_TYPE_RIGHT_BRACKET) break;   //ciarka moze ale nemusi byt, ak nasleduje ) potom break
+        last_param = current_param;
+        current_param = new_ast_node(NODE_ARGUMENT,current_token.lexeme,last_param);
+        if(!match(TOKEN_TYPE_IDENTIFIER))error(PARSER_ERROR_SYNTAX);
+        if (!match(TOKEN_TYPE_COLON))error(PARSER_ERROR_SYNTAX);
+        current_param->left = parse_data_type(current_param);
+        last_param->right = current_param;
+    }
+    
+    return return_param;
 }
 
 ASTNode* parse_data_type(ASTNode* parent)
@@ -364,7 +434,7 @@ ASTNode* parse_declaration(NodeType type, ASTNode* parent)
     if(current_token.attribute.keyword == KEYWORD_IMPORT && type == NODE_CONST_DECLARATION && strcmp(current_token.lexeme,"ifj")) { 
         ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"=",identifier);
         assignment->right = parse_prolog(assignment);
-        assignment->left = identifier;
+        assignment->left = new_ast_node(NODE_IDENTIFIER,identifier->lexeme,assignment);
         identifier->right = assignment;
         return decl;
     }
@@ -377,7 +447,7 @@ ASTNode* parse_declaration(NodeType type, ASTNode* parent)
 ASTNode* parse_assignment(char* id_lexeme, ASTNode* parent){
     ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"=",parent);
     printf("found =\n");
-    ASTNode* expr = parse_expression(assignment);
+    ASTNode* expr = parse_relation_expression(assignment);
     if(!expr) return NULL;
     assignment->left = new_ast_node(NODE_IDENTIFIER,id_lexeme,assignment);
     assignment->right = expr;
@@ -390,7 +460,6 @@ ASTNode* parse_prolog(ASTNode* parent){
     if(!strcmp(current_token.lexeme,"ifj24.zig")) error(PARSER_ERROR_SYNTAX);
     advance_token();    //preskoc token ifj24.zig
     if(!match(TOKEN_TYPE_RIGHT_BRACKET)) error(PARSER_ERROR_SYNTAX);
-    if(!match(TOKEN_TYPE_SEMICOLON)) error(PARSER_ERROR_SYNTAX);
     return new_ast_node(NODE_PROLOG,"prolog",parent);
 }
 
@@ -404,31 +473,30 @@ ASTNode* parse_program() {
 ASTNode* parse_code_block(ASTNode* parent) {
     ASTNode* code_block = new_ast_node(NODE_CODE,"code_block",parent);
 
+    ASTNode* statements = NULL;
     ASTNode* current_statement = NULL;
     ASTNode* last_statement = NULL;
 
+    current_statement = parse_statement(code_block);
+    if(current_token.type == TOKEN_TYPE_EOF) return code_block;
+    if(current_token.type == TOKEN_TYPE_SEMICOLON) advance_token();
+    if(current_token.type == TOKEN_TYPE_RIGHT_BRACE) advance_token();
+
+    statements = current_statement;
+
     while (current_token.type != TOKEN_TYPE_EOF) {
         // Parse a statement
+        if(current_statement) last_statement = current_statement;
         current_statement = parse_statement(code_block);
-        if(current_statement != NULL)
-        if (current_statement) {
-            
-            if (last_statement) {
-                last_statement->right = current_statement; // Link statements
-            } else {
-                code_block->left = current_statement; // First statement
-            }
-            last_statement = current_statement; // Update last statement
-        }
-        // Check for a statement terminator (e.g., semicolon)
-        if(match(TOKEN_TYPE_SEMICOLON)) printf("Found ;\n");
+        last_statement->left = current_statement;
 
-        if (current_token.type == TOKEN_TYPE_EOF || current_token.type == TOKEN_TYPE_RIGHT_BRACE) {
-            printf("found EOF or RIGHT brace\n");
-            advance_token();
-            break; // Exit loop on end of code block
-        }        
+        // Check for a statement terminator (e.g., semicolon)
+        if(current_token.type == TOKEN_TYPE_EOF) break;
+        if(current_token.type == TOKEN_TYPE_SEMICOLON) advance_token();
+        if(current_token.type == TOKEN_TYPE_RIGHT_BRACE) break; // Exit loop on end of code block    
     }
+
+    code_block->left = statements;
     return code_block;
 }
 
@@ -449,6 +517,10 @@ ASTNode* parse_statement(ASTNode* parent) {
             break;
         case KEYWORD_PUB:
             statement_node->right = parse_function_declaration(statement_node);
+            return statement_node;
+            break;
+        case KEYWORD_RETURN:
+            statement_node->right = parse_return(statement_node);
             return statement_node;
             break;
         default:

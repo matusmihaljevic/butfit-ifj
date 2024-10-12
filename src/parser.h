@@ -36,6 +36,7 @@ ASTNode* parse_prolog(ASTNode* parent);
 ASTNode* parse_assignment(char* id_lexeme, ASTNode* parent);
 
 //Expression parsing 
+ASTNode* parse_relation_expression(ASTNode* parent);
 ASTNode* parse_expression(ASTNode* parent);
 ASTNode* parse_term(ASTNode* parent);
 ASTNode* parse_factor(ASTNode* parent);
