@@ -14,18 +14,22 @@ typedef enum {
     NODE_CONST_DECLARATION,
     NODE_VAR_DECLARATION,
     NODE_FUNCTION_DECLARATION,
+    NODE_BUILT_IN_FUNCTION_CALL,
     NODE_FUNCTION_CALL,
     NODE_ARGUMENT,
     NODE_BINARY_OP,
     NODE_NUMBER,
+    NODE_NULL,
     NODE_INT32,
     NODE_FLOAT64,
     NODE_U8,
     NODE_IDENTIFIER,
     NODE_IF_STATEMENT,
+    NODE_WHILE_STATEMENT,
     NODE_ASSIGNMENT,
     NODE_PROLOG,
     NODE_VOID,
+    NODE_EMPTY,
     NODE_RETURN
 } NodeType;
 
@@ -38,7 +42,7 @@ typedef union {
 typedef struct ASTNode {
     NodeType type;
     char* lexeme;
-    Variable variable;
+    Variable variable;  
     struct ASTNode* left;
     struct ASTNode* right;
     struct ASTNode* parent;
@@ -47,4 +51,4 @@ typedef struct ASTNode {
 
 ASTNode* new_ast_node(NodeType type, char* lexeme,ASTNode* parent);
 ASTNode* create_binary_op_node(ASTNode* left, char* op, ASTNode* right,ASTNode* parent);
-void print_ast(ASTNode* node, int depth, bool is_left);
+void print_ast(ASTNode* node, int depth, bool is_left, bool color);

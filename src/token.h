@@ -11,6 +11,26 @@
 #define _TOKEN_H
 
 /**
+ * @enum Internal functions.
+ */
+typedef enum
+{
+	INTERN_READSTR,
+	INTERN_READI32,
+	INTERN_READF64,
+	INTERN_WRITE,
+	INTERN_I2F,
+	INTERN_F2I,
+	INTERN_STRING,
+	INTERN_LENGTH,
+	INTERN_CONCAT,
+	INTERN_SUBSTRING,
+	INTERN_STRCMP,
+	INTERN_ORD,
+	INTERN_CHR,
+} InternFunction;
+
+/**
  * @enum Reserved keywords.
  */
 typedef enum
@@ -80,7 +100,7 @@ typedef enum
 typedef union
 {
     int i32;
-	Keyword keyword;
+	int keyword;
     char* string;
 	double f64;
 } Attribute;
