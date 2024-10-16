@@ -1,37 +1,37 @@
 ./parser
-Node Type: 0, Lexeme: Program 
-├── Node Type: 1, Lexeme: code_block 
-    ├── Node Type: 2, Lexeme: statement 
-        ├── Node Type: 2, Lexeme: statement 
+Node Type: 0, Lexeme: PROGRAM 
+├── Node Type: 1, Lexeme: CODE_BLOCK 
+    ├── Node Type: 2, Lexeme: STATEMENT 
+        ├── Node Type: 2, Lexeme: STATEMENT 
             └── Node Type: 5, Lexeme: fn_decl 
                 └── Node Type: 15, Lexeme: main 
                     ├── Node Type: 20, Lexeme: void 
-                    └── Node Type: 1, Lexeme: code_block 
-                        ├── Node Type: 2, Lexeme: statement 
-                            ├── Node Type: 2, Lexeme: statement 
-                                ├── Node Type: 2, Lexeme: statement 
-                                    ├── Node Type: 2, Lexeme: statement 
-                                        ├── Node Type: 2, Lexeme: statement 
-                                            ├── Node Type: 2, Lexeme: statement 
-                                                ├── Node Type: 2, Lexeme: statement 
-                                                    ├── Node Type: 2, Lexeme: statement 
-                                                        ├── Node Type: 2, Lexeme: statement 
-                                                            └── Node Type: 17, Lexeme: while_statement 
+                    └── Node Type: 1, Lexeme: CODE_BLOCK 
+                        ├── Node Type: 2, Lexeme: STATEMENT 
+                            ├── Node Type: 2, Lexeme: STATEMENT 
+                                ├── Node Type: 2, Lexeme: STATEMENT 
+                                    ├── Node Type: 2, Lexeme: STATEMENT 
+                                        ├── Node Type: 2, Lexeme: STATEMENT 
+                                            ├── Node Type: 2, Lexeme: STATEMENT 
+                                                ├── Node Type: 2, Lexeme: STATEMENT 
+                                                    ├── Node Type: 2, Lexeme: STATEMENT 
+                                                        ├── Node Type: 2, Lexeme: STATEMENT 
+                                                            └── Node Type: 17, Lexeme: while 
                                                                 ├── Node Type: 15, Lexeme: newInput 
                                                                 └── Node Type: 15, Lexeme: inpOK 
-                                                                    ├── Node Type: 1, Lexeme: code_block 
-                                                                        ├── Node Type: 2, Lexeme: statement 
-                                                                            ├── Node Type: 2, Lexeme: statement 
-                                                                                ├── Node Type: 2, Lexeme: statement 
+                                                                    ├── Node Type: 1, Lexeme: CODE_BLOCK 
+                                                                        ├── Node Type: 2, Lexeme: STATEMENT 
+                                                                            ├── Node Type: 2, Lexeme: STATEMENT 
+                                                                                ├── Node Type: 2, Lexeme: STATEMENT 
                                                                                     └── Node Type: 16, Lexeme: if_statement 
                                                                                         ├── Node Type: 9, Lexeme: == 
                                                                                             ├── Node Type: 15, Lexeme: strcmpResult 
                                                                                             └── Node Type: 12, Lexeme: 0 
                                                                                         └── Node Type: 21, Lexeme: empty 
-                                                                                            ├── Node Type: 1, Lexeme: code_block 
-                                                                                                ├── Node Type: 2, Lexeme: statement 
-                                                                                                    ├── Node Type: 2, Lexeme: statement 
-                                                                                                        ├── Node Type: 2, Lexeme: statement 
+                                                                                            ├── Node Type: 1, Lexeme: CODE_BLOCK 
+                                                                                                ├── Node Type: 2, Lexeme: STATEMENT 
+                                                                                                    ├── Node Type: 2, Lexeme: STATEMENT 
+                                                                                                        ├── Node Type: 2, Lexeme: STATEMENT 
                                                                                                             └── Node Type: 18, Lexeme: assignment 
                                                                                                                 └── Node Type: 15, Lexeme: newInput 
                                                                                                                     ├── Node Type: 18, Lexeme: = 
@@ -45,10 +45,10 @@ Node Type: 0, Lexeme: Program
                                                                                                         ├── Node Type: 8, Lexeme: argument 
                                                                                                             ├── Node Type: 14, Lexeme: "Spravne zadano!\n" 
                                                                                                         └── Node Type: 15, Lexeme: write 
-                                                                                            └── Node Type: 1, Lexeme: code_block 
-                                                                                                ├── Node Type: 2, Lexeme: statement 
-                                                                                                    ├── Node Type: 2, Lexeme: statement 
-                                                                                                        ├── Node Type: 2, Lexeme: statement 
+                                                                                            └── Node Type: 1, Lexeme: CODE_BLOCK 
+                                                                                                ├── Node Type: 2, Lexeme: STATEMENT 
+                                                                                                    ├── Node Type: 2, Lexeme: STATEMENT 
+                                                                                                        ├── Node Type: 2, Lexeme: STATEMENT 
                                                                                                             └── Node Type: 18, Lexeme: assignment 
                                                                                                                 └── Node Type: 15, Lexeme: newInput 
                                                                                                                     ├── Node Type: 18, Lexeme: = 

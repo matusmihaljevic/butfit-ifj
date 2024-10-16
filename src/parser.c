@@ -1,6 +1,6 @@
 /**
- * @file parser.h
- * @brief Error definitions.
+ * @file parser.c
+ * @brief Parse tokens into AST.
  * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
@@ -11,191 +11,33 @@
 #define GREEN   "\033[32m"     // Green color
 
 Token current_token;
-Token lookahead_token;
 ASTNode* root = NULL;
-
-int lookahead_count = 0;
 int token_position = 0;
 
 //---------------Functions to recieve Tokens and operate with Tokens
 Token mock_tokens[] = {
-    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 1},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 1},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 1},
-    {"@import", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_IMPORT}, 1},
+    {"pub", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_PUB}, 1},
+    {"fn", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_FN}, 1},
+    {"main", TOKEN_TYPE_IDENTIFIER, {0}, 1},
     {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 1},
-    {"\"ifj24.zig\"", TOKEN_TYPE_STRING, {.string = "ifj24.zig"}, 1},
     {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 1},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 3},
-    {"pub", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_PUB}, 2},
-    {"fn", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_FN}, 2},
-    {"main", TOKEN_TYPE_IDENTIFIER, {0}, 2},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 2},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 2},
-    {"void", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_VOID}, 2},
-    {"{", TOKEN_TYPE_LEFT_BRACE, {0}, 2},
-    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 3},
-    {"str1", TOKEN_TYPE_IDENTIFIER, {0}, 3},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 3},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 3},
-    {".", TOKEN_TYPE_DOT, {0}, 3},
-    {"string", TOKEN_TYPE_INTERN, {.keyword = INTERN_STRING}, 3},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 3},
-    {"\"Toto je text v programu jazyka IFJ24\"", TOKEN_TYPE_STRING, {.string = "Toto je text v programu jazyka IFJ24"}, 3},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 3},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 3},
-    {"var", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_VAR}, 4},
-    {"str2", TOKEN_TYPE_IDENTIFIER, {0}, 4},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 4},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 4},
-    {".", TOKEN_TYPE_DOT, {0}, 4},
-    {"string", TOKEN_TYPE_INTERN, {.keyword = INTERN_STRING}, 4},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 4},
-    {"\"ktery jeste trochu obohatime\"", TOKEN_TYPE_STRING, {.string = "ktery jeste trochu obohatime"}, 4},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 4},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 4},
-    {"str2", TOKEN_TYPE_IDENTIFIER, {0}, 5},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 5},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 5},
-    {".", TOKEN_TYPE_DOT, {0}, 5},
-    {"concat", TOKEN_TYPE_INTERN, {.keyword = INTERN_CONCAT}, 5},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 5},
-    {"str1", TOKEN_TYPE_IDENTIFIER, {0}, 5},
-    {",", TOKEN_TYPE_COMMA, {0}, 5},
-    {"str2", TOKEN_TYPE_IDENTIFIER, {0}, 5},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 5},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 5},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 6},
-    {".", TOKEN_TYPE_DOT, {0}, 6},
-    {"write", TOKEN_TYPE_INTERN, {.keyword = INTERN_WRITE}, 6},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 6},
-    {"str1", TOKEN_TYPE_IDENTIFIER, {0}, 6},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 6},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 6},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 7},
-    {".", TOKEN_TYPE_DOT, {0}, 7},
-    {"write", TOKEN_TYPE_INTERN, {.keyword = INTERN_WRITE}, 7},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 7},
-    {"\"\\n\"", TOKEN_TYPE_STRING, {.string = "\n"}, 7},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 7},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 7},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 8},
-    {".", TOKEN_TYPE_DOT, {0}, 8},
-    {"write", TOKEN_TYPE_INTERN, {.keyword = INTERN_WRITE}, 8},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 8},
-    {"\"Zadejte serazenou posloupnost malych pismen a-h:\\n\"", TOKEN_TYPE_STRING, {.string = "Zadejte serazenou posloupnost malych pismen a-h:\n"}, 8},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 8},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 8},
-    {"var", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_VAR}, 9},
-    {"newInput", TOKEN_TYPE_IDENTIFIER, {0}, 9},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 9},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 9},
-    {".", TOKEN_TYPE_DOT, {0}, 9},
-    {"readstr", TOKEN_TYPE_INTERN, {.keyword = INTERN_READSTR}, 9},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 9},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 9},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 10},
-    {"var", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_VAR}, 10},
-    {"all", TOKEN_TYPE_IDENTIFIER, {0}, 10},
-    {":", TOKEN_TYPE_COLON, {0}, 10},
-    {"[]u8", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_U8}, 10},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 10},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 10},
-    {".", TOKEN_TYPE_DOT, {0}, 10},
-    {"string", TOKEN_TYPE_INTERN, {.keyword = INTERN_STRING}, 10},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 10},
-    {"\"\"", TOKEN_TYPE_STRING, {.string = ""}, 10},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 10},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 10},
-    {"while", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_WHILE}, 11},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 11},
-    {"newInput", TOKEN_TYPE_IDENTIFIER, {0}, 11},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 11},
-    {"|", TOKEN_TYPE_PIPE, {0}, 11},
-    {"inpOK", TOKEN_TYPE_IDENTIFIER, {0}, 11},
-    {"|", TOKEN_TYPE_PIPE, {0}, 11},
-    {"{", TOKEN_TYPE_LEFT_BRACE, {0}, 11},
-    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 12},
-    {"abcdefgh", TOKEN_TYPE_IDENTIFIER, {0}, 12},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 12},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 12},
-    {".", TOKEN_TYPE_DOT, {0}, 12},
-    {"string", TOKEN_TYPE_INTERN, {.keyword = INTERN_STRING}, 12},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 12},
-    {"\"abcdefgh\"", TOKEN_TYPE_STRING, {.string = "abcdefgh"}, 12},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 12},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 12},
-    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 13},
-    {"strcmpResult", TOKEN_TYPE_IDENTIFIER, {0}, 13},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 13},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 13},
-    {".", TOKEN_TYPE_DOT, {0}, 13},
-    {"strcmp", TOKEN_TYPE_INTERN, {.keyword = INTERN_STRCMP}, 13},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 13},
-    {"inpOK", TOKEN_TYPE_IDENTIFIER, {0}, 13},
-    {",", TOKEN_TYPE_COMMA, {0}, 13},
-    {"abcdefgh", TOKEN_TYPE_IDENTIFIER, {0}, 13},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 13},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 13},
-    {"if", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_IF}, 14},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 14},
-    {"strcmpResult", TOKEN_TYPE_IDENTIFIER, {0}, 14},
-    {"==", TOKEN_TYPE_EQ, {0}, 14},
-    {"0", TOKEN_TYPE_INT, {.i32 = 0}, 14},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 14},
-    {"{", TOKEN_TYPE_LEFT_BRACE, {0}, 14},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 15},
-    {".", TOKEN_TYPE_DOT, {0}, 15},
-    {"write", TOKEN_TYPE_INTERN, {.keyword = INTERN_WRITE}, 15},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 15},
-    {"\"Spravne zadano!\\n\"", TOKEN_TYPE_STRING, {.string = "Spravne zadano!\n"}, 15},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 15},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 15},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 16},
-    {".", TOKEN_TYPE_DOT, {0}, 16},
-    {"write", TOKEN_TYPE_INTERN, {.keyword = INTERN_WRITE}, 16},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 16},
-    {"all", TOKEN_TYPE_IDENTIFIER, {0}, 16},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 16},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 16},
-    {"newInput", TOKEN_TYPE_IDENTIFIER, {0}, 17},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 17},
-    {"null", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_NULL}, 17},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 17},
-    {"}", TOKEN_TYPE_RIGHT_BRACE, {0}, 18},
-    {"else", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_ELSE}, 19},
-    {"{", TOKEN_TYPE_LEFT_BRACE, {0}, 19},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 20},
-    {".", TOKEN_TYPE_DOT, {0}, 20},
-    {"write", TOKEN_TYPE_INTERN, {.keyword = INTERN_WRITE}, 20},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 20},
-    {"\"Spatne zadana posloupnost, zkuste znovu:\\n\"", TOKEN_TYPE_STRING, {.string = "Spatne zadana posloupnost, zkuste znovu:\n"}, 20},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 20},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 20},
-    {"all", TOKEN_TYPE_IDENTIFIER, {0}, 21},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 21},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 21},
-    {".", TOKEN_TYPE_DOT, {0}, 21},
-    {"concat", TOKEN_TYPE_INTERN, {.keyword = INTERN_CONCAT}, 21},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 21},
-    {"all", TOKEN_TYPE_IDENTIFIER, {0}, 21},
-    {",", TOKEN_TYPE_COMMA, {0}, 21},
-    {"inpOK", TOKEN_TYPE_IDENTIFIER, {0}, 21},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 21},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 21},
-    {"newInput", TOKEN_TYPE_IDENTIFIER, {0}, 22},
-    {"=", TOKEN_TYPE_ASSIGN, {0}, 22},
-    {"ifj", TOKEN_TYPE_IDENTIFIER, {0}, 22},
-    {".", TOKEN_TYPE_DOT, {0}, 22},
-    {"readstr", TOKEN_TYPE_INTERN, {.keyword = INTERN_READSTR}, 22},
-    {"(", TOKEN_TYPE_LEFT_BRACKET, {0}, 22},
-    {")", TOKEN_TYPE_RIGHT_BRACKET, {0}, 22},
-    {";", TOKEN_TYPE_SEMICOLON, {0}, 20},
-    {"}", TOKEN_TYPE_RIGHT_BRACE, {0}, 23},
-    {"}", TOKEN_TYPE_RIGHT_BRACE, {0}, 24},
-    {"}", TOKEN_TYPE_RIGHT_BRACE, {0}, 25}
+    {"void", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_VOID}, 1},
+    {"{", TOKEN_TYPE_LEFT_BRACE, {0}, 1},
+    {"const", TOKEN_TYPE_KEYWORD, {.keyword = KEYWORD_CONST}, 2},
+    {"x", TOKEN_TYPE_IDENTIFIER, {0}, 2},
+    {"=", TOKEN_TYPE_ASSIGN, {0}, 2},
+    {"5", TOKEN_TYPE_INT, {.i32 = 5}, 2},
+    {"+", TOKEN_TYPE_PLUS, {0}, 2},
+    {"k", TOKEN_TYPE_IDENTIFIER, {0}, 2},
+    {"*", TOKEN_TYPE_MUL, {0}, 2},
+    {"l", TOKEN_TYPE_IDENTIFIER, {0}, 2},
+    {"-", TOKEN_TYPE_MINUS, {0}, 2},
+    {"2", TOKEN_TYPE_INT, {.i32 = 2}, 2},
+    {"/", TOKEN_TYPE_DIV, {0}, 2},
+    {"u", TOKEN_TYPE_IDENTIFIER, {0}, 2},
+    {";", TOKEN_TYPE_SEMICOLON, {0}, 2},
+    {"}", TOKEN_TYPE_RIGHT_BRACE, {0}, 3}
 };
-
 
 
 Token get_token() {
@@ -219,20 +61,8 @@ int match(Type token_type)
 
 void error(int error_code)
 {
-    switch (error_code)
-    {
-    case PARSER_ERROR_SYNTAX:
-        printf("Found syntax error: %s Line: %d\n",current_token.lexeme, current_token.line);
-        exit(error_code);
-        break;
-    case SCANNER_ERROR_LEX:
-        printf("Found lexical error\n");
-        exit(error_code);
-        break;
-    default:
-        exit(error_code);
-        break;
-    }
+    printf("Found syntax error: %s Line: %d\n",current_token.lexeme, current_token.line);
+    exit(error_code);
 }
 
 //---------------Functions to create AST
@@ -258,14 +88,9 @@ void free_ast(ASTNode *node) {
     if (node == NULL) {
         return;  // Exit if the node is already NULL
     }
-    if (node->left != NULL) {
-        free_ast(node->left);
-        node->left = NULL;
-    }
-    if (node->right != NULL) {
-        free_ast(node->right);
-        node->right = NULL;
-    }
+    free_ast(node->left);
+    free_ast(node->right);
+    
     if (node->lexeme != NULL) {
         free(node->lexeme);
         node->lexeme = NULL;
@@ -280,7 +105,7 @@ void free_ast(ASTNode *node) {
 
 ASTNode* parse_null(ASTNode* parent){
     ASTNode* null_node = new_ast_node(NODE_NULL,current_token.lexeme,parent);
-    //maybe set the variable to null ??
+    null_node->variable.ptr = NULL;
     advance_token();
     return null_node;
 }
@@ -361,11 +186,8 @@ ASTNode* parse_factor(ASTNode* parent){
         return parse_null(parent);
     }
     else if(match(TOKEN_TYPE_LEFT_BRACKET)){
-
         ASTNode* expr = parse_expression(parent);
-        if(!match(TOKEN_TYPE_RIGHT_BRACKET)){
-            error(PARSER_ERROR_SYNTAX);
-        }
+        if(!match(TOKEN_TYPE_RIGHT_BRACKET))error(PARSER_ERROR_SYNTAX);
         return expr;
     }
     else{
@@ -618,7 +440,7 @@ ASTNode* parse_if(ASTNode* parent){
 ASTNode* parse_while(ASTNode* parent){
     advance_token();    //skip while
     if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
-    ASTNode* statement_name = new_ast_node(NODE_WHILE_STATEMENT,"while_statement",parent);
+    ASTNode* statement_name = new_ast_node(NODE_WHILE_STATEMENT,"while",parent);
     
     statement_name->left = parse_relation_expression(statement_name);
     if(!match(TOKEN_TYPE_RIGHT_BRACKET)) error(PARSER_ERROR_SYNTAX);
@@ -647,16 +469,18 @@ ASTNode* parse_prolog(ASTNode* parent){
     return new_ast_node(NODE_PROLOG,"prolog",parent);
 }
 
-//Basic parsing Program+CodeBlock+Statement
+//Program+CodeBlock+Statement parsing
 ASTNode* parse_program() {
-    root = new_ast_node(NODE_PROGRAM,"Program",NULL);
+    root = new_ast_node(NODE_PROGRAM,"RUDO_HULIAK",NULL);
     root->left = parse_code_block(root); // Parse the first code block
     if(!match(TOKEN_TYPE_EOF)) error(PARSER_ERROR_SYNTAX);
     return root;
 }
 
 ASTNode* parse_code_block(ASTNode* parent) {
-    ASTNode* code_block = new_ast_node(NODE_CODE,"code_block",parent);
+    ASTNode* code_block = new_ast_node(NODE_CODE,"CODE_BLOCK",parent);
+
+    if(current_token.type == TOKEN_TYPE_RIGHT_BRACE) return code_block;
 
     ASTNode* statements = NULL;
     ASTNode* current_statement = NULL;
@@ -678,7 +502,7 @@ ASTNode* parse_code_block(ASTNode* parent) {
 }
 
 ASTNode* parse_statement(ASTNode* parent) {
-    ASTNode* statement_node = new_ast_node(NODE_STATEMENT, "statement",parent);
+    ASTNode* statement_node = new_ast_node(NODE_STATEMENT, "STATEMENT",parent);
     switch (current_token.type)
     {
     case TOKEN_TYPE_KEYWORD:
@@ -730,7 +554,7 @@ ASTNode* parse_statement(ASTNode* parent) {
     return NULL;
 }
 
-
+//Vypis stromu
 void print_ast(ASTNode* node, int depth, bool is_left,bool color) {
     if (!node) return;
 
@@ -757,10 +581,3 @@ void print_ast(ASTNode* node, int depth, bool is_left,bool color) {
     }
 }
 
-int main()
-{
-    current_token = get_token();
-    root = parse_program();
-    print_ast(root, 0,false,false);
-    return 0;
-}

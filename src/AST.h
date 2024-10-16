@@ -36,6 +36,7 @@ typedef enum {
 typedef union {
     int i32;
     float f64;
+    unsigned* ptr;      //used to determine null value
     char* u8;
 } Variable;
 

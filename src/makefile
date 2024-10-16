@@ -1,31 +1,52 @@
-# Makefile for compiling parser.c
+# Makefile for compiling parser.c and code_gen.c
 
 # Compiler
 CC = gcc
 
 # Compiler flags
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -g
 
-# Target executable
-TARGET = parser
+# Targets
+PARSER_TARGET = parser
+CODEGEN_TARGET = code_gen
 
-# Source file
-SRC = parser.c
+# Source files
+PARSER_SRC = parser.c
+CODEGEN_SRC = code_gen.c
 
-# Default rule to build the target
-all: $(TARGET)
+# Object files
+PARSER_OBJ = parser.o
+CODEGEN_OBJ = code_gen.o
 
-# Rule to compile the parser.c into an executable
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
+# Header files
+HEADERS = parser.h
 
-# Clean rule to remove the generated executable
+# Default rule to build both parser and code generator
+all: $(PARSER_TARGET) $(CODEGEN_TARGET)
+
+# Rule to compile parser.c into an object file
+$(PARSER_OBJ): $(PARSER_SRC) $(HEADERS)
+	$(CC) $(CFLAGS) -c $(PARSER_SRC)
+
+# Rule to compile code_gen.c into an executable
+$(CODEGEN_TARGET): $(CODEGEN_SRC) $(PARSER_OBJ) $(HEADERS)
+	$(CC) $(CFLAGS) -o $(CODEGEN_TARGET) $(CODEGEN_SRC) $(PARSER_OBJ)
+
+# Rule to compile parser.c into an executable
+$(PARSER_TARGET): $(PARSER_SRC) $(HEADERS)
+	$(CC) $(CFLAGS) -o $(PARSER_TARGET) $(PARSER_SRC)
+
+# Clean rule to remove the generated executables and object files
 clean:
-	rm -f $(TARGET)
+	rm -f $(PARSER_TARGET) $(CODEGEN_TARGET) $(PARSER_OBJ) $(CODEGEN_OBJ)
 
-# Run rule to execute the parser
-run: $(TARGET)
-	./$(TARGET)
+# Rule to run the parser
+run_parser: $(PARSER_TARGET)
+	./$(PARSER_TARGET)
 
-# Phony targets (don't create files named all, clean, or run)
-.PHONY: all clean run
+# Rule to run the code generator
+run_codegen: $(CODEGEN_TARGET)
+	./$(CODEGEN_TARGET)
+
+# Phony targets (don't create files named all, clean, run_parser, or run_codegen)
+.PHONY: all clean run_parser run_codegen
