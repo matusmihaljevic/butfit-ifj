@@ -34,6 +34,13 @@ int DString_init(DString *ds);
 int DString_append(DString *ds, char c);
 
 /**
+ * @brief Concatenate DString with another string.
+ *
+ * @returns Zero when succesful.
+ */
+int DString_concat(DString *ds, char* string);
+
+/**
  * @brief Free the dynamic string.
  */
 void DString_free(DString *ds);
