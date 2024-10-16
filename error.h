@@ -21,4 +21,15 @@
 #define SEMANTIC_ERROR_OTHER 10 // Other semantic errors
 #define COMPILER_ERROR_INTERNAL 99 // Internal compiler error (e.g., memory allocation failure, etc.)
 
+/**
+ * @brief Print formatted error with error code, message and line.
+ *
+ * Line can be omitted using 0 as line number.
+ *
+ * @param error_code One of the error codes.
+ * @param line_number Line where the error occured.
+ * @param message Message to be printed.
+ */
+void print_error(int error_code, int line_number, char *message);
+
 #endif //_ERROR_H
