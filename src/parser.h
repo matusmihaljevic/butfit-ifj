@@ -3,11 +3,11 @@
  * @brief Contains function declarations and data structures for parsing
  *        IFJ24 language tokens into an Abstract Syntax Tree (AST).
  * 
- * 
  * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
-#pragma once
+#ifndef PARSER_H
+#define PARSER_H
 
 #include "error.h"
 #include "token.h"
@@ -208,3 +208,5 @@ ASTNode* parse_arguments(ASTNode* parent);
  * @return ASTNode* The parsed parameters node.
  */
 ASTNode* parse_parameters(ASTNode* parent);
+
+#endif
