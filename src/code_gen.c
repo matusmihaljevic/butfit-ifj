@@ -5,6 +5,15 @@
  */
 
 #include"code_gen.h"
+#define GREEN "\033[32m"
+#define RESET "\033[0m"
+DString output;
+
+
+
+void print_comm(char *mess){
+    printf(GREEN"%s"RESET,mess);
+}
 
 //Funkcie na pracu so stackom
 void Initialize_stack(exp_stack *s){
@@ -16,7 +25,7 @@ void push(exp_stack *s, ASTNode* node){
     s_elem *new_elem = (s_elem *)malloc(sizeof(s_elem));
     if (new_elem == NULL) {
         fprintf(stderr, "Memory allocation failed!\n");
-        exit(1);  // Exit if malloc fails
+        exit(42);
     }
 
     new_elem->data = node;
@@ -25,7 +34,7 @@ void push(exp_stack *s, ASTNode* node){
 }
 
 ASTNode* pop(exp_stack *s){
-    if(s->top == NULL) exit(16);
+    if(s->top == NULL) exit(42);
 
     ASTNode *node_data = s->top->data;
     s_elem *temp = s->top;
@@ -50,18 +59,10 @@ void print_stack(exp_stack *s){
     
 }
 
-//Definicie vsetkych intern funkcii, ked prideme na statement, ktory je intern pouzijeme ten #define
-void print_code(char* LOC){
-    printf("%s",LOC);
-}
-
 void generate_fn_decl(ASTNode* fn_decl){
-    //zmenit print_code
-    //debilita maximalna ... @matusko
-    print_code("#Function declaration\n");      //comment
-    print_code("LABEL ");
-    print_code(fn_decl->right->lexeme); 
-    print_code("\n");
+    
+    print_comm("#Function declaration\n");
+    printf("LABEL %s\n",fn_decl->right->lexeme);
 
     //Parameters
     generate_parameters(fn_decl->left);
@@ -76,22 +77,15 @@ void generate_parameters(ASTNode* parameter){
     
     while (parameter != NULL)
     {
-        print_code("POPS ");
-        print_code(parameter->lexeme);
-        print_code("\n");
+        printf("POPS %s\n",parameter->lexeme);
         parameter = parameter->right;
     }
 }
 
 void generate_decl(ASTNode* node){
-    //DEFCONST neexistuje !!
-    //DEFVAR <var>, kde var je id , datovy typ neriesit
-    print_code("#Variable declaration\n");
-    print_code("DEFVAR ");
-    
-    print_code("LF@");
-    print_code(node->right->lexeme);
-    print_code("\n");
+
+    print_comm("#Variable declaration\n");
+    printf("DEFVAR LF@%s\n",node->right->lexeme);
 
     //Ak existuje '='
     if(node->right->right != NULL){
@@ -102,36 +96,19 @@ void generate_decl(ASTNode* node){
 void generate_assignment(ASTNode* node){
     //generate_expression !
     //MOVE <var> <symb>, kopiruje symb do var
-    print_code("#Assignment\n");
+    print_comm("#Assignment\n");
 
     generate_expression(node->right);
     //generate_expression
-    //evaluate_expression then MOVE (node.left.lexeme) 
-    print_code(node->left->lexeme);
-    print_code("\n");
-    print_code("MOV <var> 'exp'\n");
-    
-
+    //evaluate_expression then MOVE (node.left.lexeme)
+    printf("POPS LF@%s\n",node->left->lexeme);
 }
 
 void generate_expression(ASTNode* node){
-    //Expression bude 
-    print_code("#Evaluate expression\n");
-    //Frame kvoli docasnej premmenej ktora sa potom vrati do premennej
-    print_code("CREATEFRAME\n");
-    print_code("PUSHFRAME\n");
-    //print_code("DEFVAR LF@temp\n");
+    print_comm("#Evaluate expression\n");    
     exp_stack stack;
     Initialize_stack(&stack);
-
-    //--------------------
-    print_code("#init stack\n");
     stack_expression(&stack,node);
-    
-    //--expression in postfix on stack!
-    print_stack(&stack);
-
-    print_code("POPFRAME\n");
 }
 
 void stack_expression(exp_stack* stack, ASTNode* node){
@@ -140,25 +117,60 @@ void stack_expression(exp_stack* stack, ASTNode* node){
     if(node->left != NULL) stack_expression(stack ,node->left);
     if(node->right != NULL) stack_expression(stack ,node->right);
     push(stack,node);
-    print_stack(stack);
 
     if(stack->top->data->type == NODE_FUNCTION_CALL){
         //Generate function call
-        //Pop nodu aby nedoslo k zanoreniu do fn_call
+        //Jump na Label -> execute tela -> return nodu (zaujima nas datovy typ a hodnota)
+        //nasledovne pop fn_call a push return value
     }
 
     if(stack->top->data->type == NODE_BINARY_OP){
-        //do tejto podmienky sa dostat aj pokial sa jedna o relacny operand
         ASTNode* operator = pop(stack);
-        ASTNode* snd_operand = pop(stack);
         ASTNode* fst_operand = pop(stack);
-        //result node zahodit spravit case podla typu operandu 
-        //korektne pretypovat id ku kompatibilnemu id 
-        ASTNode* result = new_ast_node(NODE_EMPTY,"result",NULL);
+        ASTNode* snd_operand = pop(stack);
 
+        if(fst_operand->type != NODE_EMPTY){
+            printf("PUSH LF@%s\n",fst_operand->lexeme);
+        }
+        
+        if(snd_operand->type != NODE_EMPTY){
+            printf("PUSH LF@%s\n",snd_operand->lexeme);
+        }
+
+        generate_op(operator);
+
+        ASTNode* result = new_ast_node(NODE_EMPTY,"result",NULL);
         push(stack,result);
     }
 
+}
+
+void generate_op(ASTNode* op){
+    if(!strcmp(op->lexeme,"+")){
+        printf("ADDS\n");
+    }
+    else if(!strcmp(op->lexeme,"-")){
+        printf("SUBS\n");
+    }
+    else if(!strcmp(op->lexeme,"*")){
+        printf("MULS\n");
+    }
+    else if(!strcmp(op->lexeme,"/")){
+        printf("DIVS\n");
+    }
+    else if(!strcmp(op->lexeme,"//")){
+        printf("IDIVS\n");
+    }
+    else if(!strcmp(op->lexeme,">")){
+        printf("GTS\n");
+    }
+    else if(!strcmp(op->lexeme,"<")){
+        printf("LTS\n");
+    }
+    else if(!strcmp(op->lexeme,"==")){
+        printf("EQS\n");
+    }
+    
 }
 
 //Global frame      = globalne premenne v jazyku ifj24 nie su ! ... ??
@@ -181,10 +193,8 @@ void generate_statement(ASTNode* statement){
 }
 
 void generate_code_block(ASTNode* code_block){
-    //PLS MATUS DAJ MI DYNSTRING !!
-    print_code("#Code_block\n");
-    print_code("CREATEFRAME\n");
-    print_code("PUSHFRAME\n");
+    print_comm("#CodeBlock\n");
+    printf("CREATEFRAME\nPUSHFRAME\n");
     
     ASTNode* statement = code_block->left;
 
@@ -194,18 +204,21 @@ void generate_code_block(ASTNode* code_block){
         statement = statement->left;
     }
 
-    print_code("POPFRAME\n");
+    printf("POPFRAME\n");
 
     return;
 }
 
 int main()
 {
-    //WARNINGY ignorovat alebo opravit ! 
     current_token = get_token();
     root = parse_program();
     print_ast(root,0,false,false);
-    //recursively get all nodes
+
+    DString_init(&output);
+
     generate_code_block(root->left);
+
+    printf("%s",output.data);
     return 0;
 }

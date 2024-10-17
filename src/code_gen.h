@@ -4,7 +4,8 @@
  * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
-#include "parser.h"
+#include "parser.c"
+#include "dstring.c"
 
 typedef struct stack_element{
     struct stack_element* previous;
@@ -26,6 +27,12 @@ void generate_statement(ASTNode* statement);
 
 void generate_decl(ASTNode* fn_decl);
 
+void generate_parameters(ASTNode* parameter);
+
 void generate_assignment(ASTNode* node);
 
 void generate_expression(ASTNode* node);
+
+void stack_expression(exp_stack* stack, ASTNode* node);
+
+void generate_op(ASTNode* op);
