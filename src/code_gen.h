@@ -19,7 +19,7 @@ typedef struct expression_stack
 }exp_stack;
 
 
-
+ASTNode* convert_type(ASTNode* fst,ASTNode* snd);
 
 void generate_code_block(ASTNode* code_block);
 

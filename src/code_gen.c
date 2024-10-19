@@ -100,7 +100,7 @@ void generate_assignment(ASTNode* node){
 
     generate_expression(node->right);
     //generate_expression
-    //evaluate_expression then MOVE (node.left.lexeme)
+    //evaluate_expression v stacku je vysledok
     printf("POPS LF@%s\n",node->left->lexeme);
 }
 
@@ -126,22 +126,39 @@ void stack_expression(exp_stack* stack, ASTNode* node){
 
     if(stack->top->data->type == NODE_BINARY_OP){
         ASTNode* operator = pop(stack);
-        ASTNode* fst_operand = pop(stack);
         ASTNode* snd_operand = pop(stack);
+        ASTNode* fst_operand = pop(stack);
 
-        if(fst_operand->type != NODE_EMPTY){
-            printf("PUSH LF@%s\n",fst_operand->lexeme);
-        }
-        
-        if(snd_operand->type != NODE_EMPTY){
-            printf("PUSH LF@%s\n",snd_operand->lexeme);
-        }
-
+        ASTNode* result = convert_type(fst_operand,snd_operand);
+        if(result->type == NODE_INT32 && !strcmp(operator->lexeme,"/")) operator->lexeme = "//";
         generate_op(operator);
-
-        ASTNode* result = new_ast_node(NODE_EMPTY,"result",NULL);
         push(stack,result);
+        printf("%d\n",result->variable.i32);
     }
+
+}
+
+ASTNode* convert_type(ASTNode* fst,ASTNode* snd){
+    //int op int
+    if(fst->variable.i32 != 0 && snd->variable.i32 !=0){
+        if(fst->type == NODE_IDENTIFIER && strcmp(fst->lexeme,"result")) printf("PUSHS LF@%s\n",fst->lexeme);
+        if(fst->type == NODE_INT32 && strcmp(fst->lexeme,"result")) printf("PUSHS int@%s\n",fst->lexeme);
+        if(snd->type == NODE_IDENTIFIER && strcmp(snd->lexeme,"result")) printf("PUSHS LF@%s\n",snd->lexeme);
+        if(snd->type == NODE_INT32 && strcmp(snd->lexeme,"result")) printf("PUSHS int@%s\n",snd->lexeme);
+        ASTNode* result = new_ast_node(NODE_INT32,"result",NULL);
+        return result;
+    }
+    //flaot op float
+    if(fst->variable.f64 != 0 && snd->variable.f64 !=0){
+        if(fst->type == NODE_IDENTIFIER && strcmp(fst->lexeme,"result")) printf("PUSHS LF@%s\n",fst->lexeme);
+        if(fst->type == NODE_FLOAT64 && strcmp(fst->lexeme,"result")) printf("PUSHS float@%s\n",fst->lexeme);
+        if(snd->type == NODE_IDENTIFIER && strcmp(snd->lexeme,"result")) printf("PUSHS LF@%s\n",snd->lexeme);
+        if(snd->type == NODE_FLOAT64 && strcmp(snd->lexeme,"result")) printf("PUSHS float@%s\n",snd->lexeme);
+        ASTNode* result = new_ast_node(NODE_INT32,"result",NULL);
+        return result;
+    }
+    //int op float
+    return NULL;
 
 }
 
