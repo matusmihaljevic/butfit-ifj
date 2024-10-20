@@ -66,17 +66,6 @@ typedef enum
 } State;
 
 /**
- * @brief Array of internal functions used by IFJ24.
- */
-char *intern_functions[] = {
-	"readstr", "readi32", "readf64",
-	"write",
-	"i2f", "f2i",
-	"string", "length", "concat", "substring", "strcmp",
-	"ord", "chr"
-};
-
-/**
  * @brief Read the next token from the source file.
  */
 int get_token(Token *token);

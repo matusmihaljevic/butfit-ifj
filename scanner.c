@@ -22,141 +22,114 @@ void set_source_file(FILE *f) {
 }
 
 static void set_keyword(Token *token, char *string) {
-    if (strcmp(string, "const") == 0)
-    {
+    if (!strcmp(string, "const")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_CONST;
     }
-    else if (strcmp(string, "else") == 0)
-    {
+    else if (!strcmp(string, "else")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_ELSE;
     }
-    else if (strcmp(string, "fn") == 0)
-    {
+    else if (!strcmp(string, "fn")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_FN;
     }
-    else if (strcmp(string, "if") == 0)
-    {
+    else if (!strcmp(string, "if")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_IF;
     }
-    else if (strcmp(string, "i32") == 0)
-    {
+    else if (!strcmp(string, "i32")){
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_I32;
     }
-    else if (strcmp(string, "f64") == 0)
-    {
+    else if (!strcmp(string, "f64")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_F64;
     }
-    else if (strcmp(string, "u8") == 0)
-    {
+    else if (!strcmp(string, "u8")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_U8;
     }
-    else if (strcmp(string, "null") == 0)
-    {
+    else if (!strcmp(string, "null")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_NULL;
     }
-    else if (strcmp(string, "pub") == 0)
-    {
+    else if (!strcmp(string, "pub")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_PUB;
     }
-    else if (strcmp(string, "return") == 0)
-    {
+    else if (!strcmp(string, "return")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_RETURN;
     }
-    else if (strcmp(string, "var") == 0)
-    {
+    else if (!strcmp(string, "var")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_VAR;
     }
-    else if (strcmp(string, "void") == 0)
-    {
+    else if (!strcmp(string, "void")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_VOID;
     }
-    else if (strcmp(string, "while") == 0)
-    {
+    else if (!strcmp(string, "while")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_WHILE;
     }
-    else if (strcmp(string, "@import") == 0)
-    {
+    else if (!strcmp(string, "@import")) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_IMPORT;
     }
 }
 
 static void set_intern(Token *token, char *string) {
-    if (strcmp(string, "readstr") == 0)
-    {
+    if (!strcmp(string, "readstr")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_READSTR;
     }
-    else if (strcmp(string, "readi32") == 0)
-    {
+    else if (!strcmp(string, "readi32")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_READI32;
     }
-    else if (strcmp(string, "readf64") == 0)
-    {
+    else if (!strcmp(string, "readf64")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_READF64;
     }
-    else if (strcmp(string, "write") == 0)
-    {
+    else if (!strcmp(string, "write")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_WRITE;
     }
-    else if (strcmp(string, "i2f") == 0)
-    {
+    else if (!strcmp(string, "i2f")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_I2F;
     }
-    else if (strcmp(string, "f2i") == 0)
-    {
+    else if (!strcmp(string, "f2i")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_F2I;
     }
-    else if (strcmp(string, "string") == 0)
-    {
+    else if (!strcmp(string, "string")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_STRING;
     }
-    else if (strcmp(string, "length") == 0)
-    {
+    else if (!strcmp(string, "length")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_LENGTH;
     }
-    else if (strcmp(string, "concat") == 0)
-    {
+    else if (!strcmp(string, "concat")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_CONCAT;
     }
-    else if (strcmp(string, "substring") == 0)
-    {
+    else if (!strcmp(string, "substring")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_SUBSTRING;
     }
-    else if (strcmp(string, "strcmp") == 0)
-    {
+    else if (!strcmp(string, "strcmp")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_STRCMP;
     }
-    else if (strcmp(string, "ord") == 0)
-    {
+    else if (!strcmp(string, "ord")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_ORD;
     }
-    else if (strcmp(string, "chr") == 0)
-    {
+    else if (!strcmp(string, "chr")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_CHR;
     }
@@ -166,9 +139,11 @@ int get_token(Token *token) {
 	int ret;
 	int c;
 	DString string;
+
 	State state = STATE_INITIAL;
     static unsigned int line = 1;
 	bool token_complete = false;
+
 	char hex[3] = {0};
 	unsigned int hex_count = 0;
 
@@ -176,8 +151,10 @@ int get_token(Token *token) {
 	token->type = TOKEN_TYPE_EMPTY;
 
 	ret = DString_init(&string);
-	if(ret > 0)
+	if(ret > 0) {
+		print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
 		return ret;
+	}
 
     while (!token_complete) {
         c = getc(source_file);
@@ -279,14 +256,17 @@ int get_token(Token *token) {
                         if (isalpha(c) || c == '_') {
                             state = STATE_IDENTIFIER;
                             ungetc(c, source_file);
-						} else if (isdigit(c)) {
+						}
+						else if (isdigit(c)) {
                             state = STATE_NUMBER;
                             ungetc(c, source_file);
-                        } else if (isspace(c)) {
+                        }
+						else if (isspace(c)) {
                             if (c == '\n')
 								line++;
-                        } else {
-							fprintf(stderr, "Unsupported character %c at line: %u\n", c, line);
+                        }
+						else {
+							print_error(SCANNER_ERROR_LEX, line, "Unknown character.");
 							DString_free(&string);
                             return SCANNER_ERROR_LEX;
                         }
@@ -351,8 +331,7 @@ int get_token(Token *token) {
 				else if (isspace(c))
 					continue;
 				else {
-					ungetc(c, source_file);
-					fprintf(stderr, "Unexpected token '%c', expected ']' at line: %u\n", c, line);
+					print_error(SCANNER_ERROR_LEX, line, "Expected ']'.");
 					DString_free(&string);
 					return SCANNER_ERROR_LEX;
 				}
@@ -364,7 +343,7 @@ int get_token(Token *token) {
 					ungetc(c, source_file);
 					set_keyword(token, string.data);
 					if (token->type != TOKEN_TYPE_KEYWORD && token->attribute.keyword != KEYWORD_U8) {
-						fprintf(stderr, "Unexpected token '%s', expected 'u8' at line: %u\n", string.data, line);
+						print_error(SCANNER_ERROR_LEX, line, "Expected 'u8'.");
 						DString_free(&string);
 						return SCANNER_ERROR_LEX;
 					}
@@ -400,39 +379,43 @@ int get_token(Token *token) {
 				if(c == '=') {
 					DString_append(&string, c);
 					token->type = TOKEN_TYPE_EQ;
-				} else
+				} else {
 					token->type = TOKEN_TYPE_ASSIGN;
-
+					ungetc(c, source_file);
+				}
 				token_complete = true;
-				ungetc(c, source_file);
 				break;
 			case STATE_NOT_EQUAL:
 				if(c == '=') {
+					DString_append(&string, c);
 					token->type = TOKEN_TYPE_NEQ;
-					token_complete = true;
-					ungetc(c, source_file);
 				} else {
+					print_error(SCANNER_ERROR_LEX, line, "Expected '='.");
 					DString_free(&string);
 					return SCANNER_ERROR_LEX;
 				}
+				token_complete = true;
 				break;
 			case STATE_LESS_THAN:
-				if(c == '=')
+				if(c == '=') {
+					DString_append(&string, c);
 					token->type = TOKEN_TYPE_LEQ;
-				else
+				} else {
 					token->type = TOKEN_TYPE_LTN;
-
+					ungetc(c, source_file);
+				}
 				token_complete = true;
-				ungetc(c, source_file);
 				break;
 			case STATE_GREATER_THAN:
-				if(c == '=')
+				if(c == '=') {
 					token->type = TOKEN_TYPE_MEQ;
-				else
+					DString_append(&string, c);
+				} else {
 					token->type = TOKEN_TYPE_MTN;
+					ungetc(c, source_file);
+				}
 
 				token_complete = true;
-				ungetc(c, source_file);
 				break;
 			case STATE_PIPE:
 				token->type = TOKEN_TYPE_PIPE;
@@ -441,13 +424,13 @@ int get_token(Token *token) {
 				break;
 			case STATE_STRING_START:
 				if (c == '\n' || c == EOF) {
+					print_error(SCANNER_ERROR_LEX, line, "Missing closing quote mark '\"'.");
 					DString_free(&string);
-					fprintf(stderr ,"String not ended properly at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				else if (c < ASCII_CONTROL_CHARS_VALUE) {
+					print_error(SCANNER_ERROR_LEX, line, "Unsupported character.");
 					DString_free(&string);
-					fprintf(stderr ,"String contains unsupported character(s) at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				else if (c == '\"')
@@ -492,8 +475,8 @@ int get_token(Token *token) {
 						state = STATE_STRING_HEXA;
 						break;
 					default:
+						print_error(SCANNER_ERROR_LEX, line, "Uknown escape sequence.");
 						DString_free(&string);
-						fprintf(stderr ,"String contains wrong escape sequence at line: %u\n", token->line);
 						return SCANNER_ERROR_LEX;
 				}
 				break;
@@ -505,8 +488,8 @@ int get_token(Token *token) {
 						char *endptr;
 						long hex_value = strtol(hex, &endptr, 16);
 						if (*endptr != '\0') {
+							print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Hexadecimal conversion fail.");
 							DString_free(&string);
-							fprintf(stderr, "Hexadecimal conversion fail at line: %u\n", token->line);
 							return COMPILER_ERROR_INTERNAL;
 						}
 						DString_append(&string, (char)hex_value);
@@ -514,8 +497,8 @@ int get_token(Token *token) {
 						state = STATE_STRING_START;
 					}
 				} else {
+					print_error(SCANNER_ERROR_LEX, line, "Invalid hexadecimal escape sequence.");
 					DString_free(&string);
-					fprintf(stderr, "Invalid hexadecimal escape sequence at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				break;
@@ -524,16 +507,16 @@ int get_token(Token *token) {
 					DString_append(&string, c);
 					state = STATE_FLOAT_0;
 				} else if (isdigit(c)) {
+					print_error(SCANNER_ERROR_LEX, line, "Expected a decimal point after '0' character.");
 					DString_free(&string);
-					fprintf(stderr, "Expected a decimal point after '0' at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				} else {
 					ungetc(c, source_file);
 					char *endptr = NULL;
 					unsigned long value = strtoul((&string)->data, &endptr, 0);
 					if (*endptr != '\0') {
+						print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Integer conversion fail.");
 						DString_free(&string);
-						fprintf(stderr ,"Integer conversion fail at line: %u\n", token->line);
 						return COMPILER_ERROR_INTERNAL;
 					}
 					token->type = TOKEN_TYPE_INT;
@@ -555,8 +538,8 @@ int get_token(Token *token) {
 					char *endptr = NULL;
 					unsigned long value = strtoul((&string)->data, &endptr, 0);
 					if (*endptr != '\0') {
+						print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Integer conversion fail.");
 						DString_free(&string);
-						fprintf(stderr ,"Integer conversion fail at line: %u\n", token->line);
 						return COMPILER_ERROR_INTERNAL;
 					}
 					token->type = TOKEN_TYPE_INT;
@@ -569,8 +552,8 @@ int get_token(Token *token) {
 					DString_append(&string, c);
 					state = STATE_FLOAT_1;
 				} else {
+					print_error(SCANNER_ERROR_LEX, line, "Expected a digit after a decimal point.");
 					DString_free(&string);
-					fprintf(stderr, "Expected a digit after decimal point at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				break;
@@ -585,8 +568,8 @@ int get_token(Token *token) {
 					char *endptr = NULL;
 					double value = strtod((&string)->data, &endptr);
 					if (*endptr != '\0') {
+						print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Float conversion fail.");
 						DString_free(&string);
-						fprintf(stderr ,"Double conversion fail at line: %u\n", token->line);
 						return COMPILER_ERROR_INTERNAL;
 					}
 					token->type = TOKEN_TYPE_FLOAT;
@@ -604,8 +587,8 @@ int get_token(Token *token) {
 					ungetc(c, source_file);
 				}
 				else {
+					print_error(SCANNER_ERROR_LEX, line, "Exponent must be followed by a (signed) digit.");
 					DString_free(&string);
-					fprintf(stderr, "Exponent must be followed by a (signed) digit at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				break;
@@ -614,8 +597,8 @@ int get_token(Token *token) {
 					DString_append(&string, c);
 					state = STATE_FLOAT_E_2;
 				} else {
+					print_error(SCANNER_ERROR_LEX, line, "Exponent must be followed by a (signed) digit.");
 					DString_free(&string);
-					fprintf(stderr, "Exponent must be followed by a (signed) digit at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				break;
@@ -627,8 +610,8 @@ int get_token(Token *token) {
 					char *endptr = NULL;
 					double value = strtod((&string)->data, &endptr);
 					if (*endptr != '\0') {
+						print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Float conversion fail.");
 						DString_free(&string);
-						fprintf(stderr ,"Double conversion fail at line: %u\n", token->line);
 						return COMPILER_ERROR_INTERNAL;
 					}
 					token->type = TOKEN_TYPE_FLOAT;
@@ -640,8 +623,8 @@ int get_token(Token *token) {
 				if(c == '\\')
 					state = STATE_MULTILINE_STRING_0;
 				else {
+					print_error(SCANNER_ERROR_LEX, line, "Unknown character.");
 					DString_free(&string);
-					fprintf(stderr, "Unexpected character '\\' at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				break;
@@ -668,8 +651,8 @@ int get_token(Token *token) {
 					state = STATE_MULTILINE_STRING_0;
 					DString_append(&string, '\n');
 				} else {
+					print_error(SCANNER_ERROR_LEX, line, "Unknown character.");
 					DString_free(&string);
-					fprintf(stderr, "Unexpected character '\\' at line: %u\n", token->line);
 					return SCANNER_ERROR_LEX;
 				}
 				break;
@@ -706,8 +689,8 @@ int get_token(Token *token) {
 					ungetc(c, source_file);
 					set_keyword(token, string.data);
 					if(token->type != TOKEN_TYPE_KEYWORD && token->attribute.keyword != KEYWORD_IMPORT) {
+						print_error(SCANNER_ERROR_LEX, line, "'@' is only supported in '@import' statement.");
 						DString_free(&string);
-						fprintf(stderr, "Unsupported character '@'. '@' is only supported in '@import' statement at line: %u\n", token->line);
 						return SCANNER_ERROR_LEX;
 					}
 
@@ -715,8 +698,8 @@ int get_token(Token *token) {
 				}
 				break;
 			default:
+				print_error(SCANNER_ERROR_LEX, line, "Unknown character.");
 				DString_free(&string);
-				fprintf(stderr, "Unsupported character %c at line: %u\n", c, token->line);
 				return SCANNER_ERROR_LEX;
 				break;
 		}
@@ -734,6 +717,7 @@ int get_token(Token *token) {
 
 	token->lexeme = malloc(string.size + 1);
 	if (token->lexeme == NULL) {
+		free(token->attribute.string);
 		DString_free(&string);
 		return COMPILER_ERROR_INTERNAL;
 	}
