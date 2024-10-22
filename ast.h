@@ -1,7 +1,7 @@
 /**
  * Project: Implementace překladače imperativního jazyka IFJ24.
- * 
- * @file symtable.h
+ *
+ * @file ast.h
  * @brief Definitions for Abstract Syntax Tree (AST) structures and operations.
  *
  * This file contains the definitions for the Abstract Syntax Tree (AST) nodes,
@@ -12,8 +12,8 @@
  * @date 2024-10-16
  */
 
-#ifndef SYMTABLE_H
-#define SYMTABLE_H
+#ifndef AST_H
+#define AST_H
 
 #include<stdlib.h>
 
@@ -52,7 +52,7 @@ typedef enum {
 /**
  * @brief Union representing a variable in the AST.
  *
- * This union allows a variable to store one of several possible data types, 
+ * This union allows a variable to store one of several possible data types,
  * including a 32-bit integer, a 64-bit floating-point number, or an 8-bit unsigned character string.
  */
 typedef union {
@@ -64,8 +64,8 @@ typedef union {
 /**
  * @brief Structure representing a node in the AST.
  *
- * This structure represents a single node in the AST, holding information such as 
- * the node's type, associated lexeme (if any), a variable value (if applicable), 
+ * This structure represents a single node in the AST, holding information such as
+ * the node's type, associated lexeme (if any), a variable value (if applicable),
  * and pointers to child and parent nodes.
  */
 typedef struct ASTNode {
@@ -93,7 +93,7 @@ ASTNode* new_ast_node(NodeType type, char* lexeme, ASTNode* parent);
 /**
  * @brief Creates a new binary operation AST node.
  *
- * This function creates a binary operation node with the specified left and right child nodes, 
+ * This function creates a binary operation node with the specified left and right child nodes,
  * and the given operator as the lexeme.
  *
  * @param left The left child node.

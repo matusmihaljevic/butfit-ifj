@@ -1,14 +1,14 @@
 /**
  * Project: Implementace překladače imperativního jazyka IFJ24.
- * 
- * @file symtable.c
+ *
+ * @file ast.c
  * @brief Implementation of Abstract Syntax Tree (AST) structures and operations.
  *
  * @author Jaroslav Podmajerský
  * @date 2024-10-16
  */
 
-#include "symtable.h"
+#include "ast.h"
 
 ASTNode* new_ast_node(NodeType type, char* lexeme,ASTNode* parent) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
