@@ -9,6 +9,8 @@
 #ifndef DSTRING_H
 #define DSTRING_H
 
+#include <stdarg.h>
+
 #define INITIAL_STR_SIZE 128
 
 typedef struct {
@@ -27,18 +29,32 @@ int DString_init(DString *ds);
 /**
  * @brief Append a new character to the string.
  *
- * Maximum size is doubled if the current maximum size is exceeded.
+ * Maximum size is doubled using realloc() if the current maximum size is exceeded.
+ * If realloc() fails, cleans the memory after itself.
  *
  * @returns Zero when succesful.
  */
 int DString_append(DString *ds, char c);
 
 /**
- * @brief Concatenate DString with another string.
+ * @brief Variadic function to concatenate DString with multiple strings.
+ *
+ * Uses DString_append(), cleans the memory after itself if concatenation is unsuccessful.
+ *
+ * @note The last parameter must be NULL, which is used as a sentinel.
  *
  * @returns Zero when succesful.
  */
-int DString_concat(DString *ds, char* string);
+int DString_concat(DString *ds, ...);
+
+/**
+ * @brief Variadic function to concatenate DString with a formatted string.
+ *
+ * Uses DString_concat(), cleans the memory after itself if concatenation is unsuccessful.
+ *
+ * @returns Zero when succesful.
+ */
+int DString_concat_with_format(DString *ds, const char* format, ...);
 
 /**
  * @brief Free the dynamic string.
