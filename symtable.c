@@ -9,24 +9,28 @@
  */
 
 #include "symtable.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-// Funkcia na vytvorenie nového uzla
-RBNode* createNode(const char* name, int type, ASTNode* data) {
+RBNode* create_node(char* name, int type, ASTNode** data) {
     RBNode* newNode = (RBNode*)malloc(sizeof(RBNode));
-    strncpy(newNode->name, name, sizeof(newNode->name) - 1);
+    if (newNode == NULL) {
+        print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+        return NULL;
+    }
+    
+    int ret = DString_init(&newNode->name);
+	if(ret > 0) {
+		print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+        return NULL;
+	}
+    DString_concat(&newNode->name, name, NULL);
     newNode->type = type;
 	newNode->data = data;
-    newNode->name[sizeof(newNode->name) - 1] = '\0'; // Uistiť sa, že reťazec je ukončený nulou
     newNode->color = RED; // Nový uzol je vždy červený
     newNode->left = newNode->right = newNode->parent = NULL;
     return newNode;
 }
 
-// Pomocná funkcia na vykonanie ľavej rotácie
-void leftRotate(RBNode** root, RBNode* x) {
+void left_rotate(RBNode** root, RBNode* x) {
     RBNode* y = x->right;
     x->right = y->left;
     if (y->left != NULL)
@@ -42,8 +46,7 @@ void leftRotate(RBNode** root, RBNode* x) {
     x->parent = y;
 }
 
-// Pomocná funkcia na vykonanie pravej rotácie
-void rightRotate(RBNode** root, RBNode* y) {
+void right_rotate(RBNode** root, RBNode* y) {
     RBNode* x = y->left;
     y->left = x->right;
     if (x->right != NULL)
@@ -59,8 +62,7 @@ void rightRotate(RBNode** root, RBNode* y) {
     y->parent = x;
 }
 
-// Funkcia na opravu stromu po vložení
-void fixViolation(RBNode** root, RBNode* z) {
+void fix_violation(RBNode** root, RBNode* z) {
     while (z != *root && z->parent->color == RED) {
         if (z->parent == z->parent->parent->left) {
             RBNode* y = z->parent->parent->right; // strýko uzla
@@ -72,12 +74,12 @@ void fixViolation(RBNode** root, RBNode* z) {
             } else {
                 if (z == z->parent->right) { // Prípad 2: Z je pravé dieťa
                     z = z->parent;
-                    leftRotate(root, z);
+                    left_rotate(root, z);
                 }
                 // Prípad 3: Z je ľavé dieťa
                 z->parent->color = BLACK;
                 z->parent->parent->color = RED;
-                rightRotate(root, z->parent->parent);
+                right_rotate(root, z->parent->parent);
             }
         } else {
             RBNode* y = z->parent->parent->left; // strýko uzla
@@ -89,27 +91,26 @@ void fixViolation(RBNode** root, RBNode* z) {
             } else {
                 if (z == z->parent->left) { // Prípad 2: Z je ľavé dieťa
                     z = z->parent;
-                    rightRotate(root, z);
+                    right_rotate(root, z);
                 }
                 // Prípad 3: Z je pravé dieťa
                 z->parent->color = BLACK;
                 z->parent->parent->color = RED;
-                leftRotate(root, z->parent->parent);
+                left_rotate(root, z->parent->parent);
             }
         }
     }
     (*root)->color = BLACK; // Koreň musí byť vždy čierny
 }
 
-// Funkcia na vloženie nového uzla do stromu
-void insert(RBNode** root, const char* name, int type, ASTNode* data) {
-    RBNode* z = createNode(name, type, data);
+void insert_rb(RBNode** root, char* name, int type, ASTNode** data) {
+    RBNode* z = create_node(name, type, data);
     RBNode* y = NULL;
     RBNode* x = *root;
 
     while (x != NULL) {
         y = x;
-        if (strcmp(z->name, x->name) < 0) // Porovnávanie podľa mena
+        if (strcmp(z->name.data, x->name.data) < 0) // Porovnávanie podľa mena
             x = x->left;
         else
             x = x->right;
@@ -118,26 +119,25 @@ void insert(RBNode** root, const char* name, int type, ASTNode* data) {
     z->parent = y;
     if (y == NULL)
         *root = z;
-    else if (strcmp(z->name, y->name) < 0)
+    else if (strcmp(z->name.data, y->name.data) < 0)
         y->left = z;
     else
         y->right = z;
 
-    fixViolation(root, z);
+    fix_violation(root, z);
 }
 
-// Funkcia na výpis stromu
-void printTree(RBNode* root, int space) {
+void print_rb_tree(RBNode* root, int space) {
     if (root == NULL)
         return;
 
     space += 10;
-    printTree(root->right, space);
+    print_rb_tree(root->right, space);
 
     printf("\n");
     for (int i = 10; i < space; i++)
         printf(" ");
-    printf("(Type %d: %s, %s | %d)\n", root->type, root->name, root->color == RED ? "RED" : "BLACK", root->data);
+    printf("(Type %d: %s, %s | %d)\n", root->type, root->name.data, root->color == RED ? "RED" : "BLACK", root->data);
 
-    printTree(root->left, space);
+    print_rb_tree(root->left, space);
 }
