@@ -55,6 +55,9 @@ void fix_violation(RBNode** root, RBNode* z);
 // Funkcia na vloženie nového uzla do stromu
 void insert_rb(RBNode** root, char* name, int type, ASTNode** data);
 
+// Funkcia na vyhľadanie uzla podľa názvu
+RBNode* search_by_name(RBNode* root, char* name);
+
 // Funkcia na výpis stromu
 void print_rb_tree(RBNode* root, int space);
 

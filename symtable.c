@@ -127,6 +127,18 @@ void insert_rb(RBNode** root, char* name, int type, ASTNode** data) {
     fix_violation(root, z);
 }
 
+RBNode* search_by_name(RBNode* root, char* name) {
+    // Ak je strom prázdny alebo ak sme našli uzol s hľadaným názvom
+    if (root == NULL || strcmp(root->name.data, name) == 0)
+        return root;
+
+    // Porovnávame názov s aktuálnym uzlom, aby sme určili, kam pokračovať
+    if (strcmp(name, root->name.data) < 0)
+        return search_by_name(root->left, name);
+    else
+        return search_by_name(root->right, name);
+}
+
 void print_rb_tree(RBNode* root, int space) {
     if (root == NULL)
         return;
@@ -137,7 +149,7 @@ void print_rb_tree(RBNode* root, int space) {
     printf("\n");
     for (int i = 10; i < space; i++)
         printf(" ");
-    printf("(Type %d: %s, %s | %d)\n", root->type, root->name.data, root->color == RED ? "RED" : "BLACK", root->data);
+    printf("(Type %d: %s, %s)\n", root->type, root->name.data, root->color == RED ? "RED" : "BLACK");
 
     print_rb_tree(root->left, space);
 }
