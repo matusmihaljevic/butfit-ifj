@@ -25,40 +25,52 @@ typedef enum {
     U8
 } VarType;
 
-// Definícia uzla červeno-čierneho stromu
+typedef enum { RED, BLACK } Color;
+
 typedef struct RBNode {
     DString name;    // Názov premennej
-    int type;         // Typ premennej
+    int type;
     ASTNode** data;
-    int color;        // 1 pre červenú, 0 pre čiernu
-    struct RBNode* parent;
-    struct RBNode* left;
-    struct RBNode* right;
+    Color color;
+    struct RBNode *left, *right, *parent;
 } RBNode;
 
-// Definícia pre farby
-#define RED 1
-#define BLACK 0
+typedef struct RedBlackTree {
+    RBNode *root;
+    RBNode *NIL; // Sentinel NIL node
+} RedBlackTree;
 
-// Funkcia na vytvorenie nového uzla
-RBNode* create_node(char* name, int type, ASTNode** data);
+// Function to create a new node
+RBNode* createNode(char* name, int type, ASTNode** data);
 
-// Pomocná funkcia na vykonanie ľavej rotácie
-void left_rotate(RBNode** root, RBNode* x);
+// Function to initialize the Red-Black Tree 
+RedBlackTree* createTree(void); 
 
-// Pomocná funkcia na vykonanie pravej rotácie
-void right_rotate(RBNode** root, RBNode* y);
+// Left Rotate
+void leftRotate(RedBlackTree* tree, RBNode* x);
 
-// Funkcia na opravu stromu po vložení
-void fix_violation(RBNode** root, RBNode* z);
+// Right Rotate
+void rightRotate(RedBlackTree* tree, RBNode* y);
 
-// Funkcia na vloženie nového uzla do stromu
-void insert_rb(RBNode** root, char* name, int type, ASTNode** data);
+// Fix the Red-Black Tree after insertion
+void fixViolation(RedBlackTree* tree, RBNode* z);
 
-// Funkcia na vyhľadanie uzla podľa názvu
-RBNode* search_by_name(RBNode* root, char* name);
+// Insertion
+void insert(RedBlackTree* tree, char* name, int type, ASTNode** data);
 
-// Funkcia na výpis stromu
-void print_rb_tree(RBNode* root, int space);
+// Find the minimum node in the subtree
+RBNode* treeMinimum(RedBlackTree* tree, RBNode* node);
+
+// Fix the Red-Black Tree after deletion
+void fixDeletion(RedBlackTree* tree, RBNode* x);
+
+// Delete a node from the tree
+void deleteNode(RedBlackTree* tree, char* name);
+
+// In-Order Traversal (for testing)
+void inOrderTraversal(RBNode* node, RBNode* NIL);
+
+// Free Memory
+void freeTree(RBNode* node, RBNode* NIL);
 
 #endif
