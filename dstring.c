@@ -101,3 +101,30 @@ int DString_concat_with_format(DString *ds, const char* format, ...) {
 void DString_free(DString *ds) {
 	free(ds->data);
 }
+
+int DString_convert_to_code(DString *ds) {
+    DString temp;
+    DString_init(&temp);
+
+    int ret = 0;
+    for (unsigned int i = 0; i < ds->size; i++) {
+        unsigned char ch = (unsigned char)ds->data[i];
+
+        if (ch <= 32 || ch == 35 || ch == 92)
+            ret = DString_concat_with_format(&temp, "\\%03d", ch);
+        else
+            ret = DString_append(&temp, ch);
+
+        if (ret != 0) {
+            DString_free(&temp);
+            return ret;
+        }
+    }
+
+    free(ds->data);
+    ds->data = temp.data;
+    ds->size = temp.size;
+    ds->max_size = temp.max_size;
+
+    return 0;
+}

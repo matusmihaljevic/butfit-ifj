@@ -57,6 +57,13 @@ int DString_concat(DString *ds, ...);
 int DString_concat_with_format(DString *ds, const char* format, ...);
 
 /**
+ * @brief Convert a string to a specific format needed by IFJcode24.
+ *
+ * @returns Zero when successful.
+ */
+int DString_convert_to_code(DString *ds);
+
+/**
  * @brief Free the dynamic string.
  */
 void DString_free(DString *ds);

@@ -443,6 +443,7 @@ int get_token(Token *token) {
 			case STATE_STRING_END:
 				token->type = TOKEN_TYPE_STRING;
 				ungetc(c, source_file);
+				DString_convert_to_code(&string);
 				token_complete = true;
 				break;
 			case STATE_STRING_ESCAPE:
@@ -643,6 +644,7 @@ int get_token(Token *token) {
 				else {
 					token->type = TOKEN_TYPE_STRING;
 					ungetc(c, source_file);
+					DString_convert_to_code(&string);
 					token_complete = true;
 				}
 				break;
