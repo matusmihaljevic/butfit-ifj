@@ -52,10 +52,10 @@ void left_rotate(RedBlackTree* tree, RBNode* x);
 // Right Rotate
 void right_rotate(RedBlackTree* tree, RBNode* y);
 
-// Fix the Red-Black Tree after insert_RBNodeion
+// Fix the Red-Black Tree after insertion
 void fix_violation(RedBlackTree* tree, RBNode* z);
 
-// insert_RBNodeion
+// Insertion of RBNode to Red-Black Tree
 int insert_RBNode(RedBlackTree* tree, char* name, int type, ASTNode* data);
 
 // Find the minimum node in the subtree
