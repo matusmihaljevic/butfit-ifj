@@ -2,7 +2,7 @@
  * Project: Implementace překladače imperativního jazyka IFJ24.
  *
  * @file symtable.c
- * @brief Implementation of Red Black Tree structures and operations.
+ * @brief Implementation of operations with Red Black Tree.
  *
  * @author Adam Bojnanský
  * @date 2024-10-23
@@ -10,18 +10,18 @@
 
 #include "symtable.h"
 
-// Function to create a new node
-RBNode* createNode(char* name, int type, ASTNode** data) {
+RBNode* create_RBNode(char* name, int type, ASTNode* data) {
     RBNode* newNode = (RBNode*)malloc(sizeof(RBNode));
     if (newNode == NULL) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
         return NULL;
     }
     int ret = DString_init(&newNode->name);
-	if(ret > 0) {
-		print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+    if (ret > 0) {
+        print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+        free(newNode);
         return NULL;
-	}
+    }
     DString_concat(&newNode->name, name, NULL);
     newNode->type = type;
     newNode->data = data;
@@ -30,21 +30,23 @@ RBNode* createNode(char* name, int type, ASTNode** data) {
     return newNode;
 }
 
-// Function to initialize the Red-Black Tree
-RedBlackTree* createTree(void) {
+RedBlackTree* create_RBTree(void) {
     RedBlackTree* tree = (RedBlackTree*)malloc(sizeof(RedBlackTree));
-    if (tree == NULL){
+    if (tree == NULL) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
         return NULL;
     }
     tree->NIL = (RBNode*)malloc(sizeof(RBNode)); // Create the NIL node
     if (tree->NIL == NULL) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+        free(tree);
         return NULL;
     }
     int ret = DString_init(&tree->NIL->name);
     if (ret > 0) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+        free(tree->NIL);
+        free(tree);
         return NULL;
     }
     tree->NIL->type = -1;
@@ -55,8 +57,7 @@ RedBlackTree* createTree(void) {
     return tree;
 }
 
-// Left Rotate
-void leftRotate(RedBlackTree* tree, RBNode* x) {
+void left_rotate(RedBlackTree* tree, RBNode* x) {
     RBNode* y = x->right;
     x->right = y->left;
 
@@ -78,8 +79,7 @@ void leftRotate(RedBlackTree* tree, RBNode* x) {
     x->parent = y;
 }
 
-// Right Rotate
-void rightRotate(RedBlackTree* tree, RBNode* y) {
+void right_rotate(RedBlackTree* tree, RBNode* y) {
     RBNode* x = y->left;
     y->left = x->right;
 
@@ -101,8 +101,7 @@ void rightRotate(RedBlackTree* tree, RBNode* y) {
     y->parent = x;
 }
 
-// Fix the Red-Black Tree after insertion
-void fixViolation(RedBlackTree* tree, RBNode* z) {
+void fix_violation(RedBlackTree* tree, RBNode* z) {
     while (z->parent != NULL && z->parent->color == RED) {
         if (z->parent == z->parent->parent->left) {
             RBNode* y = z->parent->parent->right; // Uncle
@@ -115,11 +114,11 @@ void fixViolation(RedBlackTree* tree, RBNode* z) {
             } else {
                 if (z == z->parent->right) {
                     z = z->parent;
-                    leftRotate(tree, z);
+                    left_rotate(tree, z);
                 }
                 z->parent->color = BLACK;
                 z->parent->parent->color = RED;
-                rightRotate(tree, z->parent->parent);
+                right_rotate(tree, z->parent->parent);
             }
         } else {
             RBNode* y = z->parent->parent->left; // Uncle
@@ -132,20 +131,22 @@ void fixViolation(RedBlackTree* tree, RBNode* z) {
             } else {
                 if (z == z->parent->left) {
                     z = z->parent;
-                    rightRotate(tree, z);
+                    right_rotate(tree, z);
                 }
                 z->parent->color = BLACK;
                 z->parent->parent->color = RED;
-                leftRotate(tree, z->parent->parent);
+                left_rotate(tree, z->parent->parent);
             }
         }
     }
     tree->root->color = BLACK; // Ensure the root is always black
 }
 
-// Insertion
-void insert(RedBlackTree* tree, char* name, int type, ASTNode** data) {
-    RBNode* newNode = createNode(name, type, data);
+int insert_RBNode(RedBlackTree* tree, char* name, int type, ASTNode* data) {
+    RBNode* newNode = create_RBNode(name, type, data);
+    if (newNode == NULL)
+        return COMPILER_ERROR_INTERNAL;
+    
     newNode->left = tree->NIL;
     newNode->right = tree->NIL;
 
@@ -172,19 +173,18 @@ void insert(RedBlackTree* tree, char* name, int type, ASTNode** data) {
     }
 
     // Fix the Red-Black Tree properties
-    fixViolation(tree, newNode);
+    fix_violation(tree, newNode);
+    return 0;
 }
 
-// Find the minimum node in the subtree
-RBNode* treeMinimum(RedBlackTree* tree, RBNode* node) {
+RBNode* minimum_RBTree(RedBlackTree* tree, RBNode* node) {
     while (node->left != tree->NIL) {
         node = node->left;
     }
     return node;
 }
 
-// Fix the Red-Black Tree after deletion
-void fixDeletion(RedBlackTree* tree, RBNode* x) {
+void fix_deletion(RedBlackTree* tree, RBNode* x) {
     while (x != tree->root && x->color == BLACK) {
         if (x == x->parent->left) {
             RBNode* w = x->parent->right; // Sibling
@@ -192,7 +192,7 @@ void fixDeletion(RedBlackTree* tree, RBNode* x) {
             if (w->color == RED) {
                 w->color = BLACK;
                 x->parent->color = RED;
-                leftRotate(tree, x->parent);
+                left_rotate(tree, x->parent);
                 w = x->parent->right;
             }
 
@@ -203,14 +203,14 @@ void fixDeletion(RedBlackTree* tree, RBNode* x) {
                 if (w->right->color == BLACK) {
                     w->left->color = BLACK;
                     w->color = RED;
-                    rightRotate(tree, w);
+                    right_rotate(tree, w);
                     w = x->parent->right;
                 }
 
                 w->color = x->parent->color;
                 x->parent->color = BLACK;
                 w->right->color = BLACK;
-                leftRotate(tree, x->parent);
+                left_rotate(tree, x->parent);
                 x = tree->root; // Exit loop
             }
         } else {
@@ -219,7 +219,7 @@ void fixDeletion(RedBlackTree* tree, RBNode* x) {
             if (w->color == RED) {
                 w->color = BLACK;
                 x->parent->color = RED;
-                rightRotate(tree, x->parent);
+                right_rotate(tree, x->parent);
                 w = x->parent->left;
             }
 
@@ -230,14 +230,14 @@ void fixDeletion(RedBlackTree* tree, RBNode* x) {
                 if (w->left->color == BLACK) {
                     w->right->color = BLACK;
                     w->color = RED;
-                    leftRotate(tree, w);
+                    left_rotate(tree, w);
                     w = x->parent->left;
                 }
 
                 w->color = x->parent->color;
                 x->parent->color = BLACK;
                 w->left->color = BLACK;
-                rightRotate(tree, x->parent);
+                right_rotate(tree, x->parent);
                 x = tree->root; // Exit loop
             }
         }
@@ -245,27 +245,24 @@ void fixDeletion(RedBlackTree* tree, RBNode* x) {
     x->color = BLACK; // Ensure the node is black
 }
 
-// Delete a node from the tree
-void deleteNode(RedBlackTree* tree, char* name) {
-    RBNode* z = tree->root;
+RBNode* find_RBNode(RedBlackTree* tree, RBNode* root, char* name){
+    // Ak je strom prázdny alebo ak sme našli uzol s hľadaným názvom
+    if (root == NULL || strcmp(root->name.data, name) == 0)
+        return root;
+    // Porovnávame názov s aktuálnym uzlom, aby sme určili, kam pokračovať
+    if (strcmp(name, root->name.data) < 0)
+        return find_RBNode(tree, root->left, name);
+    else
+        return find_RBNode(tree, root->right, name);
+}
+
+void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
+    RBNode* z = nodeToDelete;
     RBNode* x, *y;
 
-    // Find the node to be deleted
-    while (z != tree->NIL) {
-        if (strcmp(name, z->name.data) == 0) {
-            break;
-        } else if (strcmp(name, z->name.data) < 0) {
-            z = z->left;
-        } else {
-            z = z->right;
-        }
-    }
-
     // Node not found
-    if (z == tree->NIL) {
-        printf("Node with name %s not found.\n", name);
+    if (z == tree->NIL)
         return;
-    }
 
     y = z; // Node to be deleted
     Color originalColor = y->color;
@@ -292,7 +289,7 @@ void deleteNode(RedBlackTree* tree, char* name) {
         }
         x->parent = z->parent;
     } else {
-        y = treeMinimum(tree, z->right); // Get successor
+        y = minimum_RBTree(tree, z->right); // Get successor
         originalColor = y->color;
         x = y->right;
 
@@ -325,24 +322,49 @@ void deleteNode(RedBlackTree* tree, char* name) {
     free(z); // Free the node
 
     if (originalColor == BLACK) {
-        fixDeletion(tree, x);
+        fix_deletion(tree, x);
     }
 }
 
-// In-Order Traversal (for testing)
-void inOrderTraversal(RBNode* node, RBNode* NIL) {
+void remove_RBNodes_with_data(RedBlackTree* tree, RBNode* node, ASTNode* target_data) {
+    if (node == tree->NIL) 
+        return; // Base case: reached the sentinel node
+
+    // First, traverse the left subtree
+    if (node->left != NULL) 
+        remove_RBNodes_with_data(tree, node->left, target_data);
+    // Then traverse the right subtree
+    if (node->right != NULL) 
+        remove_RBNodes_with_data(tree, node->right, target_data);
+    
+    // Check if the current node's data matches the target data
+    if (node->data == target_data) {
+        delete_RBNode(tree, node);
+        remove_RBNodes_with_data(tree, tree->root, target_data); // After deletion, start from the root again
+    }
+}
+
+void in_order_traversal(RBNode* node, RBNode* NIL) {
     if (node != NIL) {
-        inOrderTraversal(node->left, NIL);
+        in_order_traversal(node->left, NIL);
         printf("(%d: %s | %s) ", node->type, node->name.data, (node->color == RED) ? "RED" : "BLACK");
-        inOrderTraversal(node->right, NIL);
+        in_order_traversal(node->right, NIL);
     }
 }
 
-// Free Memory
-void freeTree(RBNode* node, RBNode* NIL) {
+void print_RBTree(RBNode* node, RBNode* NIL, int level) {
+    if (node == NIL) return;
+
+    print_RBTree(node->right, NIL, level + 1);
+    for (int i = 0; i < level; i++) printf("    ");
+    printf("(%s - %s)\n", node->name.data, node->color == RED ? "RED" : "BLACK");
+    print_RBTree(node->left, NIL, level + 1);
+}
+
+void free_RBTree(RBNode* node, RBNode* NIL) {
     if (node != NIL) {
-        freeTree(node->left, NIL);
-        freeTree(node->right, NIL);
+        free_RBTree(node->left, NIL);
+        free_RBTree(node->right, NIL);
         DString_free(&node->name);
         free(node);
     }
