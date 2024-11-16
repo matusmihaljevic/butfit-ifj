@@ -15,6 +15,7 @@ ASTNode* new_ast_node(NodeType type, char* lexeme,ASTNode* parent) {
     node->type = type;
     node->lexeme = lexeme;
     node->parent = parent;
+    node->retype_flag = -1;
     node->left = NULL;
     node->right = NULL;
     return node;

@@ -16,7 +16,9 @@
 #define AST_H
 
 #include<stdlib.h>
-
+#define INT_TO_FLOAT_op1 0
+#define INT_TO_FLOAT_op2 1
+#define FLOAT_TO_INT 2
 /**
  * @brief Enum representing different types of AST nodes.
  *
@@ -72,6 +74,7 @@ typedef struct ASTNode {
     NodeType type;            /**< Type of the node (as defined in NodeType enum). */
     char* lexeme;             /**< Lexeme associated with the node (e.g., an identifier or operator). */
     Variable variable;        /**< Value associated with the node (if applicable). */
+    int retype_flag;          /**< Flag indicating implicit retyping */
     struct ASTNode* left;     /**< Pointer to the left child node. */
     struct ASTNode* right;    /**< Pointer to the right child node. */
     struct ASTNode* parent;   /**< Pointer to the parent node. */
