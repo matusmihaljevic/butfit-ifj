@@ -18,7 +18,6 @@ ASTNode* root = NULL;
 void advance_token()
 {
     if(get_token(&current_token)) error(SCANNER_ERROR_LEX);
-    
 }
 
 int match(Type token_type)
@@ -130,7 +129,7 @@ ASTNode* parse_factor(ASTNode* parent){
     }
     else if(match(TOKEN_TYPE_LEFT_BRACKET)){
 
-        ASTNode* expr = parse_expression(parent);
+        ASTNode* expr = parse_relation_expression(parent);
         if(!match(TOKEN_TYPE_RIGHT_BRACKET)){
             error(PARSER_ERROR_SYNTAX);
         }
@@ -182,7 +181,7 @@ ASTNode* parse_relation_expression(ASTNode* parent){
     ASTNode* left = parse_expression(parent);
     if(!left) return NULL;
 
-    while (current_token.type == TOKEN_TYPE_LTN || current_token.type == TOKEN_TYPE_MTN ||
+    if (current_token.type == TOKEN_TYPE_LTN || current_token.type == TOKEN_TYPE_MTN ||
            current_token.type == TOKEN_TYPE_MEQ || current_token.type == TOKEN_TYPE_LEQ ||
            current_token.type == TOKEN_TYPE_EQ || current_token.type == TOKEN_TYPE_NEQ) {
         
@@ -417,7 +416,7 @@ ASTNode* parse_code_block(ASTNode* parent) {
 
     while (current_token.type != TOKEN_TYPE_EOF && current_token.type != TOKEN_TYPE_RIGHT_BRACE) {
         if(current_statement) last_statement = current_statement;
-        current_statement = parse_statement(code_block);
+        current_statement = parse_statement(last_statement);
         last_statement->left = current_statement;
     }
 
@@ -492,7 +491,8 @@ void print_ast(ASTNode* node, int depth, bool is_left,bool color) {
     }
 
     // Print current node details
-    printf( "Node Type: %d," " Lexeme: %s \n" , node->type, node->lexeme ? node->lexeme : "NULL");
+     printf( "Node Type: %d," " Lexeme: %s ,flag=%d\n" , node->type, node->lexeme ? node->lexeme : "NULL",node->retype_flag);
+    //else printf( "Node Type: %d," " Lexeme: %s \n" , node->type, node->lexeme ? node->lexeme : "NULL");
 
     // Recur for the left child, with proper branch marking
     if (node->left || node->right) { // If there are children, print them
