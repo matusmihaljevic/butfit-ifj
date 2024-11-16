@@ -43,8 +43,8 @@ typedef struct RedBlackTree {
 // Function to create a new node
 RBNode* create_RBNode(char* name, int type, ASTNode* data);
 
-// Function to initialize the Red-Black Tree 
-RedBlackTree* create_RBTree(void); 
+// Function to initialize the Red-Black Tree
+RedBlackTree* create_RBTree(void);
 
 // Left Rotate
 void left_rotate(RedBlackTree* tree, RBNode* x);
