@@ -22,8 +22,17 @@
 typedef enum {
     INT,
     FLOAT,
-    U8
+    U8,
+    INT_N,
+    FLOAT_N,
+    U8_N
 } VarType;
+
+// Enum na typy premenných
+typedef enum {
+    VAR,
+    CONST
+} NodeType;
 
 typedef enum { RED, BLACK } Color;
 
