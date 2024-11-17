@@ -7,7 +7,6 @@
  * @note I am not the author of this implementation. Thank you IAL.
  */
 
-
 #ifndef STACK_H
 #define STACK_H
 
