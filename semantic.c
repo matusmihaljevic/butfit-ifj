@@ -50,6 +50,49 @@ RBNode* find_parent_code_block(ASTNode* node) {
     return node;
 }
 
+int compute_identifier_type(ASTNode* identifier){
+    RBNode* node = find_RBNode(symtable, symtable->root, identifier->lexeme);
+    if (node == NULL) {
+        print_error(SEMANTIC_ERROR_UNDEFINED, 0, "Identifier not found in assignment");
+        exit(SEMANTIC_ERROR_UNDEFINED);
+    }
+    return node->data->varType;
+}
+
+int compute_binary_op_type(ASTNode* binary_op_node){
+    int op1 = pop(&exp_stack);
+    int op2 = pop(&exp_stack);
+    if(op1 == INT && op2 == INT){
+        if(!strcmp(binary_op_node->lexeme, "/")) binary_op_node->lexeme = "//";
+        return INT;
+    } else if(op1 == FLOAT && op2 == FLOAT){
+        return FLOAT;
+    } else if(op1 == INT && op2 == FLOAT) {
+        binary_op_node->retype_flag = INT_TO_FLOAT_op1;
+        return FLOAT;
+    } else if(op1 == FLOAT && op2 == INT) {
+        binary_op_node->retype_flag = INT_TO_FLOAT_op2;
+        return FLOAT;
+    } else {
+        print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Binary operation with wrong parameters");
+        exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+    }
+}
+
+void compute_expression_type(ASTNode* expression_root) {
+    if(expression_root == NULL) return;
+    compute_expression_type(expression_root->left);
+    compute_expression_type(expression_root->right);
+    
+    if(expression_root->type == NODE_IDENTIFIER || expression_root->type == NODE_FUNCTION_CALL) {
+        push(&exp_stack, compute_identifier_type(expression_root));
+    } else if(expression_root->type == NODE_BINARY_OP) {
+        push(&exp_stack, compute_binary_op_type(expression_root));
+    } else {
+        push(&exp_stack, get_type(expression_root));
+    }
+}
+
 void semantic_check_main() {
     RBNode* main = find_RBNode(symtable, symtable->root, "main");
     if (main == NULL) {
@@ -82,18 +125,23 @@ void semantic_check_global_code_block(ASTNode* main_code_block){
 }
 
 void check_declaration(ASTNode* decl_node) {
-    RBNodeType nodeType = (decl_node->type == NODE_VAR_DECLARATION) ? VAR : CONST;
     if (find_RBNode(symtable, symtable->root, decl_node->right->lexeme) != NULL) {
         print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Variable or constant redefinition");
         exit(SEMANTIC_ERROR_REDEFINITION);
-    } else {
-        insert_RBNode(symtable, decl_node->right->lexeme, nodeType, FLOAT, find_parent_code_block(decl_node));
     }
-    
-    //osetrit vsetky typy 
-    //compute_expression_type(decl_node->right->right->right);    //vrati na vrchol stacku typ
-    //int data_type = pop(&exp_stack);
-    //if((decl_node->left != NULL) && data_type != get_type(decl_node->left)) exit(SEMANTIC_ERROR_REDEFINITION);
+    RBNodeType nodeType = (decl_node->type == NODE_VAR_DECLARATION) ? VAR : CONST;
+    RBNodeType dataType;
+    compute_expression_type(decl_node->right->right->right);
+    if (decl_node->left == NULL) {
+        dataType = pop(&exp_stack);
+    } else {
+        dataType = get_type(decl_node->left);
+        if (dataType != pop(&exp_stack)){
+            print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Variable or constant type mismatch in assign");
+            exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+        }
+    }
+    insert_RBNode(symtable, decl_node->right->lexeme, nodeType, dataType, find_parent_code_block(decl_node));
 }
 
 void semantic_check_statement(ASTNode* statement){
@@ -110,15 +158,13 @@ void semantic_check_statement(ASTNode* statement){
 }
 
 void semantic_check_body_block(ASTNode* fn_code_block){
-    printf("FUCNTION: %s\n", fn_code_block->parent->lexeme);
+    printf("FUNCTION: %s\n", fn_code_block->parent->lexeme);
     ASTNode* statement = fn_code_block->left;
     while (statement != NULL) {
         printf("    STATEMENT: %s\n", statement->right->lexeme);
         semantic_check_statement(statement);
         statement = statement->left;
     }
-    printf("\nCode block SYMTABLE:\n");
-    print_RBTree(symtable->root, symtable->NIL, 0);
     remove_RBNodes_by_code_block(symtable, symtable->root, fn_code_block);
 }
 
@@ -130,51 +176,6 @@ void semantic_check_functions(RBNode* main_code_block){
     }
 }
 
-// void compute_expression_type(ASTNode* expression_root){
-//     if(expression_root == NULL) return;
-//     compute_expression_type(expression_root->left);
-//     compute_expression_type(expression_root->right);
-
-//     if(expression_root->type == NODE_IDENTIFIER || expression_root->type == NODE_FUNCTION_DECLARATION){
-//         push(&exp_stack,compute_identifier_type(expression_root));
-//     }
-//     else if(expression_root->type == NODE_BINARY_OP){
-//         push(&exp_stack,compute_binary_op_type(expression_root));
-//     }
-//     else{
-//         push(&exp_stack,get_type(expression_root));
-//     }
-
-// }
-
-// int compute_identifier_type(ASTNode* factor){
-//     RBNode* id = find_RBNode(symtable,symtable->root,factor->lexeme);
-//     RBNode* id_fn = find_RBNode(global_symtable,global_symtable->root,factor->lexeme);
-//     if(id == NULL && id_fn == NULL) exit(SEMANTIC_ERROR_UNDEFINED);
-//     if(id == NULL) return id_fn->type;
-//     return id->type;
-// }
-
-// int compute_binary_op_type(ASTNode* binary_op_node){
-//     int op1 = pop(&exp_stack);
-//     int op2 = pop(&exp_stack);
-//     if(op1 == INT && op2 == INT){
-//         if(!strcmp(binary_op_node->lexeme,"/")) binary_op_node->lexeme = "//";
-//         return INT;
-//     }
-//     else if(op1 == FLOAT && op2 == FLOAT) return FLOAT;
-//     else if(op1 == INT && op2 == FLOAT){
-//         binary_op_node->retype_flag = INT_TO_FLOAT_op1;
-//         return FLOAT;
-//     }
-//     else if(op1 == FLOAT && op2 == INT){
-//         binary_op_node->retype_flag = INT_TO_FLOAT_op2;
-//         return FLOAT;
-//     }
-    
-//     return -99;
-// }
-
 void semantic_check(ASTNode* root){
     semantic_check_prologue(root->left->left);
     symtable = create_RBTree();
@@ -182,9 +183,6 @@ void semantic_check(ASTNode* root){
     semantic_check_global_code_block(root->left);
 
     semantic_check_functions(root->left);
-
-    printf("\nSYMTABLE after delete:\n");
-    print_RBTree(symtable->root, symtable->NIL, 0);
 
     free_RBTree(symtable->root, symtable->NIL);
     free(symtable->NIL);
