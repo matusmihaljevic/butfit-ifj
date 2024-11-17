@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "error.h"
 #include "dstring.h"
 #include "ast.h"
@@ -25,12 +26,25 @@ typedef enum {
     U8
 } VarType;
 
+// Enum na typy uzlov
+typedef enum {
+    FN,
+    VAR,
+    CONST
+} RBNodeType;
+
 typedef enum { RED, BLACK } Color;
 
+typedef struct RBNodeData {
+    VarType varType;
+    RBNodeType nodeType;
+    ASTNode* ptr;
+    bool changed;
+} RBNodeData;
+
 typedef struct RBNode {
-    DString name;    // Názov premennej
-    int type;
-    ASTNode* data;
+    DString name;
+    RBNodeData* data;
     Color color;
     struct RBNode *left, *right, *parent;
 } RBNode;
@@ -56,13 +70,7 @@ void right_rotate(RedBlackTree* tree, RBNode* y);
 void fix_violation(RedBlackTree* tree, RBNode* z);
 
 // Insertion of RBNode to Red-Black Tree
-int insert_RBNode(RedBlackTree* tree, char* name, int type, ASTNode* data);
-
-// Find the minimum node in the subtree
-RBNode* minimum_RBTree(RedBlackTree* tree, RBNode* node);
-
-// Fix the Red-Black Tree after deletion
-void fix_deletion(RedBlackTree* tree, RBNode* x);
+int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, ASTNode* ptr);
 
 // Find a node in the tree
 RBNode* find_RBNode(RedBlackTree* tree, RBNode* root, char* name);
@@ -71,7 +79,7 @@ RBNode* find_RBNode(RedBlackTree* tree, RBNode* root, char* name);
 void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete);
 
 // Function to recursively traverse and delete nodes based on data
-void remove_RBNodes_with_data(RedBlackTree* tree, RBNode* node, ASTNode* target_data);
+void remove_RBNodes_by_code_block(RedBlackTree* tree, RBNode* node, ASTNode* codeBlock);
 
 // In-Order Traversal (for testing)
 void in_order_traversal(RBNode* node, RBNode* NIL);
