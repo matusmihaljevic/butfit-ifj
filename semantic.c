@@ -50,16 +50,51 @@ ASTNode* find_parent_code_block(ASTNode* node) {
     return node;
 }
 
-int compute_identifier_type(ASTNode* identifier){
-    RBNode* node = find_RBNode(symtable, symtable->root, identifier->lexeme);
-    if (node == NULL) {
-        print_error(SEMANTIC_ERROR_UNDEFINED, 0, "Identifier not found in assignment");
+void check_identifier(ASTNode* expression_root) {
+    RBNode* identifier = find_RBNode(symtable, symtable->root, expression_root->lexeme);
+    if (identifier == NULL || identifier->data->nodeType == FN) {
+        print_error(SEMANTIC_ERROR_UNDEFINED, 0, "Identifier not found");
         exit(SEMANTIC_ERROR_UNDEFINED);
     }
+}
+
+void check_function_call(ASTNode* fn_call) {
+    RBNode* function = find_RBNode(symtable, symtable->root, fn_call->right->lexeme);
+    if (function == NULL || function->data->nodeType != FN) {
+        print_error(SEMANTIC_ERROR_UNDEFINED, 0, "Function not found");
+        exit(SEMANTIC_ERROR_UNDEFINED);
+    }
+    ASTNode* fn_param = function->data->ptr->left;
+    ASTNode* fn_call_param = fn_call->left;
+    int param_type;
+    int call_param_type;
+    while (fn_param != NULL) {
+        if (fn_call_param == NULL){
+            print_error(SEMANTIC_ERROR_WRONG_PARAMS, 0, "Function call with wrong number of parameters (too few)");
+            exit(SEMANTIC_ERROR_WRONG_PARAMS);
+        }
+        param_type = get_type(fn_param->left);
+        compute_expression_type(fn_call_param->left);
+        call_param_type = pop(&exp_stack);
+        if (param_type != call_param_type) {
+            print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Function call with wrong parameter type");
+            exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+        }
+        fn_param = fn_param->right;
+        fn_call_param = fn_call_param->right;
+    }
+    if (fn_call_param != NULL) {
+        print_error(SEMANTIC_ERROR_WRONG_PARAMS, 0, "Function call with wrong number of parameters (too many)");
+        exit(SEMANTIC_ERROR_WRONG_PARAMS);
+    }
+}
+
+int compute_identifier_type(ASTNode* identifier) {
+    RBNode* node = find_RBNode(symtable, symtable->root, identifier->lexeme);
     return node->data->varType;
 }
 
-int compute_binary_op_type(ASTNode* binary_op_node){
+int compute_binary_op_type(ASTNode* binary_op_node) {
     int op1 = pop(&exp_stack);
     int op2 = pop(&exp_stack);
     if(op1 == INT && op2 == INT){
@@ -81,14 +116,26 @@ int compute_binary_op_type(ASTNode* binary_op_node){
 
 void compute_expression_type(ASTNode* expression_root) {
     if(expression_root == NULL) return;
-    compute_expression_type(expression_root->left);
-    compute_expression_type(expression_root->right);
-    if(expression_root->type == NODE_IDENTIFIER || expression_root->type == NODE_FUNCTION_CALL) {
+    if (expression_root->type != NODE_FUNCTION_CALL) {
+        compute_expression_type(expression_root->left);
+        compute_expression_type(expression_root->right);
+    }
+    switch (expression_root->type) {
+    case NODE_IDENTIFIER:
+        check_identifier(expression_root);
         push(&exp_stack, compute_identifier_type(expression_root));
-    } else if(expression_root->type == NODE_BINARY_OP) {
+        break;
+    case NODE_FUNCTION_CALL:
+        // to do null in params
+        check_function_call(expression_root);
+        push(&exp_stack, compute_identifier_type(expression_root->right));
+        break;
+    case NODE_BINARY_OP:
         push(&exp_stack, compute_binary_op_type(expression_root));
-    } else {
+        break;
+    default:
         push(&exp_stack, get_type(expression_root));
+        break;
     }
 }
 
@@ -159,6 +206,9 @@ void semantic_check_statement(ASTNode* statement){
         break;
     case NODE_CONST_DECLARATION:
         check_declaration(statement->right);
+        break;
+    case NODE_FUNCTION_CALL:
+        check_function_call(statement->right);
         break;
     default:
         break;

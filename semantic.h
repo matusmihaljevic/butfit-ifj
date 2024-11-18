@@ -16,3 +16,6 @@
 
 // Semantická kontrola programu
 void semantic_check(ASTNode* root);
+
+// Spracovanie typu celého výrazu
+void compute_expression_type(ASTNode* expression_root);
