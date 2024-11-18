@@ -43,7 +43,7 @@ int get_type(ASTNode* type_node) {
     }
 }
 
-RBNode* find_parent_code_block(ASTNode* node) {
+ASTNode* find_parent_code_block(ASTNode* node) {
     while (node->type != NODE_CODE) {
         node = node->parent;
     }
@@ -83,7 +83,6 @@ void compute_expression_type(ASTNode* expression_root) {
     if(expression_root == NULL) return;
     compute_expression_type(expression_root->left);
     compute_expression_type(expression_root->right);
-    
     if(expression_root->type == NODE_IDENTIFIER || expression_root->type == NODE_FUNCTION_CALL) {
         push(&exp_stack, compute_identifier_type(expression_root));
     } else if(expression_root->type == NODE_BINARY_OP) {
@@ -118,7 +117,8 @@ void semantic_check_global_code_block(ASTNode* main_code_block){
             print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Function redefinition");
             exit(SEMANTIC_ERROR_REDEFINITION);
         }
-        insert_RBNode(symtable, statement_node->right->right->lexeme, FN, get_type(statement_node->right->right->left), statement_node->right);
+        // to do nullable
+        insert_RBNode(symtable, statement_node->right->right->lexeme, FN, get_type(statement_node->right->right->left), false, statement_node->right);
         statement_node = statement_node->left;
     }
     semantic_check_main();
@@ -130,18 +130,26 @@ void check_declaration(ASTNode* decl_node) {
         exit(SEMANTIC_ERROR_REDEFINITION);
     }
     RBNodeType nodeType = (decl_node->type == NODE_VAR_DECLARATION) ? VAR : CONST;
-    RBNodeType dataType;
+    VarType dataType;
+    bool nullable = false;
     compute_expression_type(decl_node->right->right->right);
     if (decl_node->left == NULL) {
         dataType = pop(&exp_stack);
     } else {
+        nullable = decl_node->left->variable.i32 == 1 ? true : false;
         dataType = get_type(decl_node->left);
-        if (dataType != pop(&exp_stack)){
+        int expressionType = pop(&exp_stack);
+        if (expressionType < 0) {
+            if (nullable == false) {
+                print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "NULL assignment to non-nullable variable or constant");
+                exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+            }
+        } else if (dataType != expressionType) {
             print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Variable or constant type mismatch in assign");
             exit(SEMANTIC_ERROR_TYPE_MISMATCH);
         }
     }
-    insert_RBNode(symtable, decl_node->right->lexeme, nodeType, dataType, find_parent_code_block(decl_node));
+    insert_RBNode(symtable, decl_node->right->lexeme, nodeType, dataType, nullable, find_parent_code_block(decl_node));
 }
 
 void semantic_check_statement(ASTNode* statement){
@@ -168,7 +176,7 @@ void semantic_check_body_block(ASTNode* fn_code_block){
     remove_RBNodes_by_code_block(symtable, symtable->root, fn_code_block);
 }
 
-void semantic_check_functions(RBNode* main_code_block){
+void semantic_check_functions(ASTNode* main_code_block){
     ASTNode* current_function = main_code_block->left->left;
     while (current_function != NULL) {
         semantic_check_body_block(current_function->right->right->right);

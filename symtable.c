@@ -10,7 +10,7 @@
 
 #include "symtable.h"
 
-RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, ASTNode* ptr) {
+RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nullable, ASTNode* ptr) {
     RBNode* newNode = (RBNode*)malloc(sizeof(RBNode));
     if (newNode == NULL) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
@@ -34,7 +34,7 @@ RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, ASTNode*
     newNode->data->varType = varType;
     newNode->data->nodeType = nodeType;
     newNode->data->ptr = ptr;
-    newNode->data->nullable = false;
+    newNode->data->nullable = nullable;
     newNode->data->changed = false;
     newNode->color = RED; // New nodes are red by default
     newNode->left = newNode->right = newNode->parent = NULL;
@@ -47,7 +47,7 @@ RedBlackTree* create_RBTree(void) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
         return NULL;
     }
-    tree->NIL = create_RBNode("", -1, -1, NULL);
+    tree->NIL = create_RBNode("", -1, -1, false, NULL);
     tree->NIL->color = BLACK;
     tree->root = tree->NIL;
     return tree;
@@ -138,8 +138,8 @@ void fix_violation(RedBlackTree* tree, RBNode* z) {
     tree->root->color = BLACK; // Ensure the root is always black
 }
 
-int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, ASTNode* ptr) {
-    RBNode* newNode = create_RBNode(name, nodeType, varType, ptr);
+int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, bool nullable, ASTNode* ptr) {
+    RBNode* newNode = create_RBNode(name, nodeType, varType, nullable, ptr);
     if (newNode == NULL)
         return COMPILER_ERROR_INTERNAL;
     

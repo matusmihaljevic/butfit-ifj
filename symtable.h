@@ -57,7 +57,7 @@ typedef struct RedBlackTree {
 } RedBlackTree;
 
 // Function to create a new node
-RBNode* create_RBNode(char* name, int type, ASTNode* data);
+RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nullable, ASTNode* ptr);
 
 // Function to initialize the Red-Black Tree
 RedBlackTree* create_RBTree(void);
@@ -72,7 +72,7 @@ void right_rotate(RedBlackTree* tree, RBNode* y);
 void fix_violation(RedBlackTree* tree, RBNode* z);
 
 // Insertion of RBNode to Red-Black Tree
-int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, ASTNode* ptr);
+int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, bool nullable, ASTNode* ptr);
 
 // Find a node in the tree
 RBNode* find_RBNode(RedBlackTree* tree, RBNode* root, char* name);
