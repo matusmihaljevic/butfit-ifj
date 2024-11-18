@@ -407,6 +407,8 @@ ASTNode* parse_code_block(ASTNode* parent) {
     ASTNode* statements = NULL;
     ASTNode* current_statement = NULL;
     ASTNode* last_statement = NULL;
+    
+    if(current_token.type == TOKEN_TYPE_RIGHT_BRACE) return code_block;
 
     current_statement = parse_statement(code_block);
     statements = current_statement;
