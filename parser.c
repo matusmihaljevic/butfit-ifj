@@ -227,6 +227,7 @@ ASTNode* parse_function_declaration(ASTNode* parent)
 ASTNode* parse_return(ASTNode* parent){
     advance_token();
     ASTNode* return_statement = new_ast_node(NODE_RETURN,"return",parent);
+    if(current_token.type == TOKEN_TYPE_SEMICOLON) return return_statement;
     return_statement->left = parse_relation_expression(return_statement);
     return return_statement;
 }
