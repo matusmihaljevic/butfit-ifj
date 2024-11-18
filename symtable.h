@@ -23,7 +23,8 @@
 typedef enum {
     INT,
     FLOAT,
-    U8
+    U8,
+    VOID
 } VarType;
 
 // Enum na typy uzlov
@@ -39,6 +40,7 @@ typedef struct RBNodeData {
     VarType varType;
     RBNodeType nodeType;
     ASTNode* ptr;
+    bool nullable;
     bool changed;
 } RBNodeData;
 

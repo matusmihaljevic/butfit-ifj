@@ -34,6 +34,7 @@ RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, ASTNode*
     newNode->data->varType = varType;
     newNode->data->nodeType = nodeType;
     newNode->data->ptr = ptr;
+    newNode->data->nullable = false;
     newNode->data->changed = false;
     newNode->color = RED; // New nodes are red by default
     newNode->left = newNode->right = newNode->parent = NULL;
