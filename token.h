@@ -28,6 +28,7 @@ typedef enum
 	INTERN_STRCMP,
 	INTERN_ORD,
 	INTERN_CHR,
+	INTERN_AS,
 } InternFunction;
 
 /**
@@ -35,20 +36,25 @@ typedef enum
  */
 typedef enum
 {
-    KEYWORD_CONST,    // const
-    KEYWORD_ELSE,     // else
-    KEYWORD_FN,       // fn
-    KEYWORD_IF,       // if
-    KEYWORD_I32,      // i32
-    KEYWORD_F64,      // f64
-    KEYWORD_U8,       // []u8
-    KEYWORD_NULL,     // null
-    KEYWORD_PUB,      // pub
-    KEYWORD_RETURN,   // return
-    KEYWORD_VAR,      // var
-    KEYWORD_VOID,     // void
-    KEYWORD_WHILE,     // while
-    KEYWORD_IMPORT     // @import
+    KEYWORD_CONST,    		// const
+    KEYWORD_ELSE,     		// else
+    KEYWORD_FN,       		// fn
+    KEYWORD_IF,       		// if
+    KEYWORD_I32,      		// i32
+    KEYWORD_F64,      		// f64
+    KEYWORD_U8,       		// []u8
+    KEYWORD_NULL,     		// null
+    KEYWORD_PUB,      		// pub
+    KEYWORD_RETURN,   		// return
+    KEYWORD_VAR,      		// var
+    KEYWORD_VOID,     		// void
+	KEYWORD_WHILE,    		// while
+    KEYWORD_IMPORT,   		// @import
+    KEYWORD_FOR,      		// for
+	KEYWORD_BREAK,			// break
+	KEYWORD_CONTINUE,		// continue
+	KEYWORD_ORELSE,   		// orelse
+	KEYWORD_UNREACHABLE,	// unreachable
 } Keyword;
 
 /**
