@@ -38,12 +38,14 @@ typedef enum {
     NODE_BINARY_OP,             /**< Represents a binary operation (e.g., addition, subtraction, relation ...). */
     NODE_NUMBER,                /**< Represents a numeric value. */
     NODE_NULL,                  /**< Represents a null value. */
+    NODE_NULLABLE,              /**< Represents a nullable data type. */
     NODE_INT32,                 /**< Represents a 32-bit integer. */
     NODE_FLOAT64,               /**< Represents a 64-bit floating-point number. */
     NODE_U8,                    /**< Represents an 8-bit unsigned character string (usually a string literal). */
     NODE_IDENTIFIER,            /**< Represents an identifier (e.g., variable name). */
     NODE_IF_STATEMENT,          /**< Represents an if statement. */
     NODE_WHILE_STATEMENT,       /**< Represents a while loop statement. */
+    NODE_FOR_STATEMENT,         /**< Represents a for loop statement. */
     NODE_ASSIGNMENT,            /**< Represents an assignment statement. */
     NODE_PROLOG,                /**< Represents a prolog node, typically used for function headers. */
     NODE_VOID,                  /**< Represents a void type or return. */
