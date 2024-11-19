@@ -78,6 +78,26 @@ static void set_keyword(Token *token, char *string) {
         token->type = TOKEN_TYPE_KEYWORD;
         token->attribute.keyword = KEYWORD_IMPORT;
     }
+    else if (!strcmp(string, "for")) {
+        token->type = TOKEN_TYPE_KEYWORD;
+        token->attribute.keyword = KEYWORD_FOR;
+    }
+    else if (!strcmp(string, "break")) {
+        token->type = TOKEN_TYPE_KEYWORD;
+        token->attribute.keyword = KEYWORD_BREAK;
+    }
+    else if (!strcmp(string, "continue")) {
+        token->type = TOKEN_TYPE_KEYWORD;
+        token->attribute.keyword = KEYWORD_CONTINUE;
+    }
+    else if (!strcmp(string, "orelse")) {
+        token->type = TOKEN_TYPE_KEYWORD;
+        token->attribute.keyword = KEYWORD_ORELSE;
+    }
+    else if (!strcmp(string, "unreachable")) {
+        token->type = TOKEN_TYPE_KEYWORD;
+        token->attribute.keyword = KEYWORD_UNREACHABLE;
+    }
 }
 
 static void set_intern(Token *token, char *string) {
@@ -132,6 +152,10 @@ static void set_intern(Token *token, char *string) {
     else if (!strcmp(string, "chr")) {
         token->type = TOKEN_TYPE_INTERN;
         token->attribute.keyword = INTERN_CHR;
+    }
+    else if (!strcmp(string, "@as")) {
+        token->type = TOKEN_TYPE_INTERN;
+        token->attribute.keyword = INTERN_AS;
     }
 }
 
@@ -236,7 +260,7 @@ int get_token(Token *token) {
 						DString_append(&string, c);
                         break;
                     case '@':
-                        state = STATE_IMPORT;
+                        state = STATE_AT;
 						DString_append(&string, c);
                         break;
                     case '0':
@@ -684,19 +708,26 @@ int get_token(Token *token) {
 					token_complete = true;
 				}
 				break;
-			case STATE_IMPORT:
+			case STATE_AT:
 				if(isalpha(c)) {
 					DString_append(&string, c);
 				} else {
 					ungetc(c, source_file);
 					set_keyword(token, string.data);
-					if(token->type != TOKEN_TYPE_KEYWORD && token->attribute.keyword != KEYWORD_IMPORT) {
-						print_error(SCANNER_ERROR_LEX, line, "'@' is only supported in '@import' statement.");
-						DString_free(&string);
-						return SCANNER_ERROR_LEX;
+					if(token->type == TOKEN_TYPE_KEYWORD) {
+						token_complete = true;
+						break;
 					}
 
-					token_complete = true;
+					set_intern(token, string.data);
+					if(token->type == TOKEN_TYPE_INTERN) {
+						token_complete = true;
+						break;
+					}
+
+					print_error(SCANNER_ERROR_LEX, line, "'@' is only supported in '@import' or '@as' statement.");
+					DString_free(&string);
+					return SCANNER_ERROR_LEX;
 				}
 				break;
 			default:
