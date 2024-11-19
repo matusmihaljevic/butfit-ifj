@@ -60,9 +60,7 @@ void generate_function_decl(ASTNode* function_decl_node){
 
     generate_code_block(function_decl_node->right->right);
 
-    DString_concat(&Output,"POPFRAME\n",NULL);
-    if(!strcmp(function_decl_node->right->lexeme,"main")) DString_concat(&Output,"EXIT int@0\n",NULL);
-    else DString_concat(&Output,"RETURN\n",NULL);
+    if(!strcmp(function_decl_node->right->lexeme,"main")) DString_concat(&Output,"POPFRAME\nEXIT int@0\n",NULL);
 }
 
 void generate_var_decl(ASTNode* decl_node){
@@ -84,7 +82,8 @@ void generate_var_decl(ASTNode* decl_node){
 void generate_assignment(ASTNode* assignment_node){
     if(!strcmp("assignment",assignment_node->lexeme)) assignment_node = assignment_node->right->left;
     generate_expression(assignment_node->right);
-    DString_concat(&Output,"POPS LF@",assignment_node->left->lexeme,"\n",NULL);
+    if(!strcmp("_",assignment_node->left->lexeme)) DString_concat(&Output,"POPS GF@",assignment_node->left->lexeme,"\n",NULL);
+    else DString_concat(&Output,"POPS LF@",assignment_node->left->lexeme,"\n",NULL);
 }
 
 void generate_expression(ASTNode* expression_root_node){
@@ -115,8 +114,7 @@ void generate_expression(ASTNode* expression_root_node){
 }
 
 void generate_impilict_retyping(ASTNode* binary_op_node){
-    //char* curr_id = id++;
-    //IMPLICIT_RETYPE
+
     if(binary_op_node->retype_flag == INT_TO_FLOAT_op1){
         DString_concat(&Output,"INT2FLOATS\n",NULL);
     }
@@ -129,13 +127,12 @@ void generate_impilict_retyping(ASTNode* binary_op_node){
 }
 
 void generate_binary_op(ASTNode* binary_op_node){
-    
     generate_impilict_retyping(binary_op_node);
 
     if(!strcmp(binary_op_node->lexeme,"+")) DString_concat(&Output,"ADDS\n",NULL);
     else if(!strcmp(binary_op_node->lexeme,"-")) DString_concat(&Output,"SUBS\n",NULL);
     else if(!strcmp(binary_op_node->lexeme,"*")) DString_concat(&Output,"MULS\n",NULL);
-    else if(!strcmp(binary_op_node->lexeme,"/")) DString_concat(&Output,"IDIVS\n",NULL);
+    else if(!strcmp(binary_op_node->lexeme,"/")) DString_concat(&Output,"DIVS\n",NULL);
     else if(!strcmp(binary_op_node->lexeme,"//")) DString_concat(&Output,"IDIVS\n",NULL);
     else if(!strcmp(binary_op_node->lexeme,">")) DString_concat(&Output,"GTS\n",NULL);
     else if(!strcmp(binary_op_node->lexeme,"<")) DString_concat(&Output,"LTS\n",NULL);
@@ -143,7 +140,6 @@ void generate_binary_op(ASTNode* binary_op_node){
     else if(!strcmp(binary_op_node->lexeme,"!=")) DString_concat(&Output,"EQS\nNOTS\n",NULL);
     else if(!strcmp(binary_op_node->lexeme,">=")) DString_concat(&Output,"LTS\nNOTS\n",NULL);
     else if(!strcmp(binary_op_node->lexeme,"<=")) DString_concat(&Output,"GTS\nNOTS\n",NULL);
-
 }
 
 void generate_fn_call(ASTNode* fn_node){
@@ -167,7 +163,6 @@ void generate_built_in_fn_call(ASTNode* built_in_fn_node){
     else if(!strcmp(built_in_fn_node->right->lexeme,"readf64")) INTERN_FN_READF64
     else if(!strcmp(built_in_fn_node->right->lexeme,"i2f")) INTERN_FN_I2F
     else if(!strcmp(built_in_fn_node->right->lexeme,"f2i")) INTERN_FN_F2I
-    
 }
 
 void generate_while_loop(ASTNode* while_node){
@@ -193,7 +188,7 @@ void generate_while_loop(ASTNode* while_node){
         DString_concat(&Output,"PUSHS GF@GF_RESULT\n",NULL);
         DString_concat(&Output,"PUSHS nil@nil\n",NULL);
         DString_concat(&Output,"JUMPIFEQS $break_",&curr_id,"\n",NULL);
-        DString_concat(&Output,"MOVE LF@",while_node->right->lexeme," GF@GF_RESULT\n",NULL);     //acquire the result
+        DString_concat(&Output,"MOVE LF@",while_node->right->lexeme," GF@GF_RESULT\n",NULL);
 
     }
     cycle_enter = true;
@@ -219,7 +214,6 @@ void generate_if(ASTNode* if_node){
         generate_expression(if_node->left);
         DString_concat(&Output,"POPS LF@",if_node->right->lexeme,"\n",NULL);
     }
-    
     generate_code_block(if_node->right->left);
     DString_concat(&Output,"JUMP $end_if_",&curr_id,"\n",NULL);
     DString_concat(&Output,"LABEL $else_",&curr_id,"\n",NULL);
@@ -228,7 +222,9 @@ void generate_if(ASTNode* if_node){
 }
 
 void generate_return(ASTNode* return_node){
-    if(return_node->left != NULL) generate_expression(return_node->left);
+    if(return_node->left == NULL) return;
+    generate_expression(return_node->left);
+    DString_concat(&Output,"POPFRAME\nRETURN\n",NULL);
 }
 
 void generate_statement(ASTNode* statement_node){
