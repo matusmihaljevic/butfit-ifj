@@ -15,6 +15,6 @@ clean:
 	rm -f $(TARGET)
 
 run: $(TARGET)
-	$(TARGET)
+	@exec $(TARGET)
 
 .PHONY: all clean run
