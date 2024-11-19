@@ -62,7 +62,7 @@ typedef enum
     STATE_MULTILINE_STRING_2,
     STATE_IDENTIFIER,
     STATE_KEYWORD,
-    STATE_IMPORT,
+    STATE_AT,
 } State;
 
 /**
