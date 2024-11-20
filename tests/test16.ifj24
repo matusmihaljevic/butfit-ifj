@@ -1,0 +1,16 @@
+const ifj = @import("ifj24.zig");
+
+pub fn main() void {
+    var outer: i32 = 0;
+    var sum: i32 = 0;
+
+    while (outer < 4) {
+        var inner: i32 = 0;
+        while (inner < 3) {
+            sum = outer * inner + sum;
+            inner = inener + 1;
+        }
+        outer = outer + 1;
+    }
+    ifj.write(sum); // Očakávaný výsledok je 18
+}

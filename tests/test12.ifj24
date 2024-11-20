@@ -1,0 +1,17 @@
+const ifj = @import("ifj24.zig");
+
+pub fn main() void {
+
+var str1 = ifj.string("test");
+var str2 = ifj.string("test");
+ifj.write(ifj.strcmp(str1, str2)); 
+ifj.write("\n");
+
+
+var str3 = ifj.string("abc");
+var str4 = ifj.string("def");
+ifj.write(ifj.strcmp(str3, str4)); 
+ifj.write("\n");
+ifj.write(ifj.strcmp(str4, str3)); 
+ifj.write("\n");
+}

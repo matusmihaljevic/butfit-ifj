@@ -1,0 +1,18 @@
+const ifj = @import("ifj24.zig");
+
+pub fn add(a: i32, b: i32) i32 {
+    return a + b;
+}
+
+pub fn main() void {
+    var resultadd: i32 = add(10, 20);
+    var resultsub: i32 = sub(10,20);
+    ifj.write(resultadd); 
+    ifj.write("\n");
+    ifj.write(resultsub);
+}
+
+
+pub fn sub(a: i32, b: i32) i32 {
+    return a - b;
+}

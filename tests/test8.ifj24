@@ -1,0 +1,12 @@
+const ifj = @import("ifj24.zig");
+
+pub fn main() void {
+var b: ?i32 = ifj.readi32();
+if (b != null) |nonNullValue| {
+    ifj.write(nonNullValue);
+    ifj.write("\n");
+} else {
+    ifj.write("null");
+    ifj.write("\n");
+}
+}

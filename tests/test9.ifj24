@@ -1,0 +1,30 @@
+const ifj = @import("ifj24.zig");
+
+pub fn main() void {
+
+var floatVal = ifj.i2f(42);
+ifj.write(floatVal); 
+ifj.write("\n"); 
+
+var intVal = ifj.f2i(3.14);
+ifj.write(intVal);
+ifj.write("\n"); 
+
+var str = ifj.string("Hello");
+ifj.write(ifj.length(str));
+ifj.write("\n"); 
+
+var subStr = ifj.substring(str, 0, 2);
+ifj.write(subStr);
+ifj.write("\n"); 
+
+var str2 = ifj.string("ABca\n");
+ifj.write(str2);
+
+ifj.write(ifj.ord(str2, 0));
+ifj.write("\n"); 
+
+ifj.write(ifj.chr(str2, 65));
+ifj.write("\n"); 
+
+}
