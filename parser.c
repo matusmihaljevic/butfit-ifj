@@ -95,9 +95,7 @@ ASTNode* parse_id_op(ASTNode* parent){
         statement_name->right = current;
         return statement_name;
     }
-
     
-
     if(!strcmp(current->lexeme,"ifj") && match(TOKEN_TYPE_DOT)){
         statement_name = new_ast_node(NODE_BUILT_IN_FUNCTION_CALL,"built_fn_call",parent);
         if(current_token.type != TOKEN_TYPE_INTERN) error(PARSER_ERROR_SYNTAX);
@@ -109,6 +107,13 @@ ASTNode* parse_id_op(ASTNode* parent){
         if(!match(TOKEN_TYPE_RIGHT_BRACKET) && statement_name->left != NULL) error(PARSER_ERROR_SYNTAX);
         return statement_name;
     }
+
+    if(current_token.type == TOKEN_TYPE_INTERN && current_token.attribute.keyword == INTERN_AS){
+        if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
+        statement_name->left = parse_arguments(statement_name);
+        if(!match(TOKEN_TYPE_RIGHT_BRACKET) && statement_name->left != NULL) error(PARSER_ERROR_SYNTAX);
+    }
+
     return current;
 }
 
@@ -401,6 +406,15 @@ ASTNode* parse_loop(ASTNode* parent){
     return statement_name;
 }
 
+ASTNode* parse_iteration_statement(ASTNode* parent){
+    if(current_token.attribute.keyword == KEYWORD_CONTINUE){
+        advance_token();
+        return new_ast_node(NODE_CONTINUE_STATEMENT,"continue",parent);
+    }
+    advance_token();
+    return new_ast_node(NODE_BREAK_STATEMENT,"break",parent);
+}
+
 ASTNode* parse_prolog(ASTNode* parent){
     advance_token();
     if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
@@ -473,12 +487,13 @@ ASTNode* parse_statement(ASTNode* parent) {
             return statement_node;
             break;
         case KEYWORD_WHILE:
-            statement_node->right = parse_loop(statement_node);
-            return statement_node;
-            break;
         case KEYWORD_FOR:
             statement_node->right = parse_loop(statement_node);
             return statement_node;
+            break;
+        case KEYWORD_CONTINUE:
+        case KEYWORD_BREAK:
+            statement_node->right = parse_iteration_statement(statement_node);
             break;
         default:
             error(PARSER_ERROR_SYNTAX);

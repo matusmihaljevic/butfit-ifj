@@ -87,6 +87,14 @@ ASTNode* parse_if(ASTNode* parent);
 ASTNode* parse_loop(ASTNode* parent);
 
 /**
+ * @brief Parses a iteration statement.
+ *
+ * @param parent The parent node of the iteration statement.
+ * @return ASTNode* The parsed loop node.
+ */
+ASTNode* parse_iteration_statement(ASTNode* parent);
+
+/**
  * @brief Parses a function declaration or definition.
  *
  * @param parent The parent node of the function declaration.
