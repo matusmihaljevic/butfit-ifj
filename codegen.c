@@ -250,11 +250,11 @@ void generate_while_loop(ASTNode* while_node){
 }
 
 void generate_continue(){
-    DString_concat(&Output,"JUMP $cycle_",&iter_id,"\n",NULL);
+    return;
 }
 
 void generate_break(){
-
+    return;
 }
 
 void generate_if(ASTNode* if_node){
@@ -316,10 +316,13 @@ void generate_statement(ASTNode* statement_node){
         break;
     case NODE_RETURN:
         generate_return(statement_node->right);
+        break;
     case NODE_CONTINUE_STATEMENT:
         generate_continue();
+        break;
     case NODE_BREAK_STATEMENT:
         generate_break();
+        break;
     default:
         break;
     }
