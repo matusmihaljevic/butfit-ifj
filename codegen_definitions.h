@@ -20,31 +20,6 @@
                    "JUMP $main\n",              \
                    NULL);
 
-#define IMPLICIT_RETYPE DString_concat(&Output,                         \
-                   "#ignore----implicit-retyping-----\n"                \
-                   "POPS GF@GF_OPERAND1\n"                              \
-                   "POPS GF@GF_OPERAND2\n"                              \
-                   "TYPE GF@GF_RESULT GF@GF_OPERAND2\n"                 \
-                   "PUSHS GF@GF_OPERAND2\n"                             \
-                   "TYPE GF@GF_OPERAND2 GF@GF_OPERAND1\n"               \
-                   "CONCAT GF@GF_RESULT GF@GF_OPERAND2 GF@GF_RESULT\n"  \
-                   "JUMPIFEQ $floatint_",&curr_id," GF@GF_RESULT string@floatint\n"  \
-                   "JUMPIFEQ $intfloat_",&curr_id," GF@GF_RESULT string@intfloat\n"  \
-                   "JUMP $pushback_",&curr_id,"\n",  \
-                   "LABEL $intfloat_",&curr_id,"\n", \
-                   "PUSHS GF@GF_OPERAND1\n",         \
-                   "INT2FLOATS\n",                   \
-                   "JUMP $end_",&curr_id,"\n",       \
-                   "LABEL $floatint_",&curr_id,"\n", \
-                   "INT2FLOATS\n",                   \
-                   "PUSHS GF@GF_OPERAND1\n",         \
-                   "JUMP $end_",&curr_id,"\n"        \
-                   "LABEL $pushback_",&curr_id,"\n"   \
-                   "PUSHS GF@GF_OPERAND1\n"          \
-                   "LABEL $end_",&curr_id,"\n",      \
-                   "#ignore-------------------------\n",               \
-                   NULL);
-
 #define INTERN_FN_STRING  ;
 
 #define INTERN_FN_WRITE   DString_concat(&Output,"POPS GF@GF_RESULT\n",           \
@@ -83,12 +58,12 @@
                                         "POPS GF@GF_OPERAND1\n"                      \
                                         "LT GF@GF_RESULT GF@GF_OPERAND1 int@0\n"     \
                                         "JUMPIFEQ $ret_nil_",&curr_id," GF@GF_RESULT bool@true\n"    \
-                                        "LT GF@GF_RESULT GF@GF_OPERAND2 int@0\n"              \
+                                        "LT GF@GF_RESULT GF@GF_OPERAND2 int@0\n"                     \
                                         "JUMPIFEQ $ret_nil_",&curr_id," GF@GF_RESULT bool@true\n"    \
-                                        "GT GF@GF_RESULT GF@GF_OPERAND1 GF@GF_OPERAND2\n"     \
+                                        "GT GF@GF_RESULT GF@GF_OPERAND1 GF@GF_OPERAND2\n"            \
                                         "JUMPIFEQ $ret_nil_",&curr_id," GF@GF_RESULT bool@true\n"    \
-                                        "POPS GF@GF_SUBSTR\n"                           \ 
-                                        "STRLEN GF@GF_RESULT GF@GF_SUBSTR\n"   \
+                                        "POPS GF@GF_SUBSTR\n"        \
+                                        "STRLEN GF@GF_RESULT GF@GF_SUBSTR\n"    \
                                         "LT GF@GF_RESULT GF@GF_RESULT GF@GF_OPERAND2\n"              \
                                         "JUMPIFEQ $ret_nil_",&curr_id," GF@GF_RESULT bool@true\n"    \
                                         "STRLEN GF@GF_RESULT GF@GF_SUBSTR\n"                         \

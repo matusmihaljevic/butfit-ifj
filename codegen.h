@@ -89,6 +89,23 @@ void generate_built_in_fn_call(ASTNode* ifj_node);
 void generate_while_loop(ASTNode* while_node);
 
 /**
+ * Generates code for a for loop AST node.
+ * 
+ * @param for_node Node representing a for loop.
+ */
+void generate_for_loop(ASTNode* for_node);
+
+/**
+ * Generates code continue command;
+ */
+void generate_continue();
+
+/**
+ * Generates code for break command.
+ */
+void generate_break();
+
+/**
  * Generates code for an if statement AST node.
  * 
  * @param if_node Node representing an if statement.
