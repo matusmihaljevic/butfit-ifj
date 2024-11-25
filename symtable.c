@@ -10,7 +10,7 @@
 
 #include "symtable.h"
 
-RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nullable, ASTNode* ptr) {
+RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nullable, bool changed, ASTNode* ptr) {
     RBNode* newNode = (RBNode*)malloc(sizeof(RBNode));
     if (newNode == NULL) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
@@ -35,7 +35,7 @@ RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nul
     newNode->data->nodeType = nodeType;
     newNode->data->ptr = ptr;
     newNode->data->nullable = nullable;
-    newNode->data->changed = false;
+    newNode->data->changed = changed;
     newNode->color = RED; // New nodes are red by default
     newNode->left = newNode->right = newNode->parent = NULL;
     return newNode;
@@ -47,7 +47,7 @@ RedBlackTree* create_RBTree(void) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
         return NULL;
     }
-    tree->NIL = create_RBNode("", -1, -1, false, NULL);
+    tree->NIL = create_RBNode("", -1, -1, false, false, NULL);
     tree->NIL->color = BLACK;
     tree->root = tree->NIL;
     return tree;
@@ -138,11 +138,11 @@ void fix_violation(RedBlackTree* tree, RBNode* z) {
     tree->root->color = BLACK; // Ensure the root is always black
 }
 
-int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, bool nullable, ASTNode* ptr) {
-    RBNode* newNode = create_RBNode(name, nodeType, varType, nullable, ptr);
+int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, bool nullable, bool changed, ASTNode* ptr) {
+    RBNode* newNode = create_RBNode(name, nodeType, varType, nullable, changed, ptr);
     if (newNode == NULL)
         return COMPILER_ERROR_INTERNAL;
-    
+
     newNode->left = tree->NIL;
     newNode->right = tree->NIL;
 
@@ -324,24 +324,22 @@ void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
 }
 
 void remove_RBNodes_by_code_block(RedBlackTree* tree, RBNode* node, ASTNode* code_block) {
-    if (node == tree->NIL) 
+    if (node == tree->NIL)
         return; // Base case: reached the sentinel node
 
     // First, traverse the left subtree
-    if (node->left != NULL) 
+    if (node->left != NULL)
         remove_RBNodes_by_code_block(tree, node->left, code_block);
     // Then traverse the right subtree
-    if (node->right != NULL) 
+    if (node->right != NULL)
         remove_RBNodes_by_code_block(tree, node->right, code_block);
-    
-    // Check if the current node's data matches the target data
-    if (node->data != NULL) {
-        if (node->data->ptr == code_block) {
-            delete_RBNode(tree, node);
-            remove_RBNodes_by_code_block(tree, tree->root, code_block); // After deletion, start from the root again
-        }
+
+    // Check if the current node's data is the same as the code block
+    if (node->name.data != NULL && node->data->ptr == code_block) {
+        delete_RBNode(tree, node);
+        remove_RBNodes_by_code_block(tree, tree->root, code_block); // After deletion, start from the root again
     }
-    
+
 }
 
 void in_order_traversal(RBNode* node, RBNode* NIL) {

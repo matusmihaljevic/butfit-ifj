@@ -47,3 +47,4 @@
 
 STACKDEF(int, symbol)
 STACKDEF(ASTNode *, AST)
+STACKDEF(TypeProperties *, property)
