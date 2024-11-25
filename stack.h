@@ -13,6 +13,7 @@
 #include "ast.h"
 #include "semantic.h"
 #include "LL_buin_fn.h"
+#include "precedence_analysis.h"
 #include <stdbool.h>
 
 // Maximální velikost zásobníku
@@ -39,12 +40,24 @@
   void stack_##TNAME##_init(stack_##TNAME##_t *stack);                         \
   void stack_##TNAME##_push(stack_##TNAME##_t *stack, T item);                 \
   T stack_##TNAME##_pop(stack_##TNAME##_t *stack);                             \
-  T stack_##TNAME##_peek(stack_##TNAME##_t *stack);                             \
   T stack_##TNAME##_top(stack_##TNAME##_t *stack);                             \
   bool stack_##TNAME##_empty(stack_##TNAME##_t *stack);
 
-STACKDEC(int, symbol)
+STACKDEC(GrammarSymbol *, symbol)
 STACKDEC(ASTNode *, AST)
 STACKDEC(TypeProperties *, property)
+
+/**
+ * @brief Iterate through the stack from top to bottom.
+ */
+#define STACK_FOREACH(stack, index) \
+    for (int index = (stack).top; index >= 0; index--)
+
+/**
+ * @brief Find the topmost terminal symbol at the stack.
+ * @returns A pointer to the topmost terminal.
+ */
+GrammarSymbol* stack_symbol_top_terminal(stack_symbol_t *stack);
+
 
 #endif //STACK_H
