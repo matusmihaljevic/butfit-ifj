@@ -10,21 +10,32 @@
 
 #include "symtable.h"
 
-RBNode* create_RBNode(char* name, int type, ASTNode* data) {
+RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nullable, bool changed, ASTNode* ptr) {
     RBNode* newNode = (RBNode*)malloc(sizeof(RBNode));
     if (newNode == NULL) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
         return NULL;
     }
+    // Alokácia pamäte pre RBNodeData
+    newNode->data = (RBNodeData*)malloc(sizeof(RBNodeData));
+    if (newNode->data == NULL) {
+        print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+        free(newNode); // Uvoľnenie alokovanej pamäte pre uzol
+        return NULL;
+    }
     int ret = DString_init(&newNode->name);
     if (ret > 0) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
+        free(newNode->data); // Uvoľnenie alokovanej pamäte pre RBNodeData
         free(newNode);
         return NULL;
     }
     DString_concat(&newNode->name, name, NULL);
-    newNode->type = type;
-    newNode->data = data;
+    newNode->data->varType = varType;
+    newNode->data->nodeType = nodeType;
+    newNode->data->ptr = ptr;
+    newNode->data->nullable = nullable;
+    newNode->data->changed = changed;
     newNode->color = RED; // New nodes are red by default
     newNode->left = newNode->right = newNode->parent = NULL;
     return newNode;
@@ -36,23 +47,8 @@ RedBlackTree* create_RBTree(void) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
         return NULL;
     }
-    tree->NIL = (RBNode*)malloc(sizeof(RBNode)); // Create the NIL node
-    if (tree->NIL == NULL) {
-        print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
-        free(tree);
-        return NULL;
-    }
-    int ret = DString_init(&tree->NIL->name);
-    if (ret > 0) {
-        print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
-        free(tree->NIL);
-        free(tree);
-        return NULL;
-    }
-    tree->NIL->type = -1;
-    tree->NIL->data = NULL;
+    tree->NIL = create_RBNode("", -1, -1, false, false, NULL);
     tree->NIL->color = BLACK;
-    tree->NIL->left = tree->NIL->right = tree->NIL->parent = NULL;
     tree->root = tree->NIL;
     return tree;
 }
@@ -142,11 +138,11 @@ void fix_violation(RedBlackTree* tree, RBNode* z) {
     tree->root->color = BLACK; // Ensure the root is always black
 }
 
-int insert_RBNode(RedBlackTree* tree, char* name, int type, ASTNode* data) {
-    RBNode* newNode = create_RBNode(name, type, data);
+int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, bool nullable, bool changed, ASTNode* ptr) {
+    RBNode* newNode = create_RBNode(name, nodeType, varType, nullable, changed, ptr);
     if (newNode == NULL)
         return COMPILER_ERROR_INTERNAL;
-    
+
     newNode->left = tree->NIL;
     newNode->right = tree->NIL;
 
@@ -319,6 +315,7 @@ void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
     }
 
     DString_free(&z->name);
+    free(z->data); // Free the data
     free(z); // Free the node
 
     if (originalColor == BLACK) {
@@ -326,28 +323,29 @@ void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
     }
 }
 
-void remove_RBNodes_with_data(RedBlackTree* tree, RBNode* node, ASTNode* target_data) {
-    if (node == tree->NIL) 
+void remove_RBNodes_by_code_block(RedBlackTree* tree, RBNode* node, ASTNode* code_block) {
+    if (node == tree->NIL)
         return; // Base case: reached the sentinel node
 
     // First, traverse the left subtree
-    if (node->left != NULL) 
-        remove_RBNodes_with_data(tree, node->left, target_data);
+    if (node->left != NULL)
+        remove_RBNodes_by_code_block(tree, node->left, code_block);
     // Then traverse the right subtree
-    if (node->right != NULL) 
-        remove_RBNodes_with_data(tree, node->right, target_data);
-    
-    // Check if the current node's data matches the target data
-    if (node->data == target_data) {
+    if (node->right != NULL)
+        remove_RBNodes_by_code_block(tree, node->right, code_block);
+
+    // Check if the current node's data is the same as the code block
+    if (node->name.data != NULL && node->data->ptr == code_block) {
         delete_RBNode(tree, node);
-        remove_RBNodes_with_data(tree, tree->root, target_data); // After deletion, start from the root again
+        remove_RBNodes_by_code_block(tree, tree->root, code_block); // After deletion, start from the root again
     }
+
 }
 
 void in_order_traversal(RBNode* node, RBNode* NIL) {
     if (node != NIL) {
         in_order_traversal(node->left, NIL);
-        printf("(%d: %s | %s) ", node->type, node->name.data, (node->color == RED) ? "RED" : "BLACK");
+        printf("(%s | %s) ", node->name.data, (node->color == RED) ? "RED" : "BLACK");
         in_order_traversal(node->right, NIL);
     }
 }
@@ -366,6 +364,7 @@ void free_RBTree(RBNode* node, RBNode* NIL) {
         free_RBTree(node->left, NIL);
         free_RBTree(node->right, NIL);
         DString_free(&node->name);
+        free(node->data);
         free(node);
     }
 }

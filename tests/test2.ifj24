@@ -1,0 +1,21 @@
+const ifj = @import("ifj24.zig");
+
+pub fn main() void {
+
+const x: i32 = 10;
+ifj.write(x); 
+ifj.write("\n");
+
+var y: f64 = 5.5;
+ifj.write(y); 
+ifj.write("\n");
+
+y = 7.2;
+ifj.write(y); 
+ifj.write("\n");
+
+var z = 9.4;
+ifj.write(z); 
+ifj.write("\n");
+
+}

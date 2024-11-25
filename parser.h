@@ -79,12 +79,20 @@ ASTNode* parse_assignment(char* id_lexeme, ASTNode* parent);
 ASTNode* parse_if(ASTNode* parent);
 
 /**
- * @brief Parses a while loop statement.
+ * @brief Parses a loop statement.
  *
  * @param parent The parent node of the while statement.
- * @return ASTNode* The parsed while loop node.
+ * @return ASTNode* The parsed loop node.
  */
-ASTNode* parse_while(ASTNode* parent);
+ASTNode* parse_loop(ASTNode* parent);
+
+/**
+ * @brief Parses a iteration statement.
+ *
+ * @param parent The parent node of the iteration statement.
+ * @return ASTNode* The parsed loop node.
+ */
+ASTNode* parse_iteration_statement(ASTNode* parent);
 
 /**
  * @brief Parses a function declaration or definition.

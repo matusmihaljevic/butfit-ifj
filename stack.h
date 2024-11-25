@@ -7,11 +7,12 @@
  * @note I am not the author of this implementation. Thank you IAL.
  */
 
-
 #ifndef STACK_H
 #define STACK_H
 
 #include "ast.h"
+#include "semantic.h"
+#include "LL_buin_fn.h"
 #include <stdbool.h>
 
 // Maximální velikost zásobníku
@@ -44,5 +45,6 @@
 
 STACKDEC(int, symbol)
 STACKDEC(ASTNode *, AST)
+STACKDEC(TypeProperties *, property)
 
 #endif //STACK_H

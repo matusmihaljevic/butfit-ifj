@@ -18,7 +18,6 @@ ASTNode* root = NULL;
 void advance_token()
 {
     if(get_token(&current_token)) error(SCANNER_ERROR_LEX);
-    
 }
 
 int match(Type token_type)
@@ -96,7 +95,7 @@ ASTNode* parse_id_op(ASTNode* parent){
         statement_name->right = current;
         return statement_name;
     }
-
+    
     if(!strcmp(current->lexeme,"ifj") && match(TOKEN_TYPE_DOT)){
         statement_name = new_ast_node(NODE_BUILT_IN_FUNCTION_CALL,"built_fn_call",parent);
         if(current_token.type != TOKEN_TYPE_INTERN) error(PARSER_ERROR_SYNTAX);
@@ -108,6 +107,13 @@ ASTNode* parse_id_op(ASTNode* parent){
         if(!match(TOKEN_TYPE_RIGHT_BRACKET) && statement_name->left != NULL) error(PARSER_ERROR_SYNTAX);
         return statement_name;
     }
+
+    if(current_token.type == TOKEN_TYPE_INTERN && current_token.attribute.keyword == INTERN_AS){
+        if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
+        statement_name->left = parse_arguments(statement_name);
+        if(!match(TOKEN_TYPE_RIGHT_BRACKET) && statement_name->left != NULL) error(PARSER_ERROR_SYNTAX);
+    }
+
     return current;
 }
 
@@ -130,7 +136,7 @@ ASTNode* parse_factor(ASTNode* parent){
     }
     else if(match(TOKEN_TYPE_LEFT_BRACKET)){
 
-        ASTNode* expr = parse_expression(parent);
+        ASTNode* expr = parse_relation_expression(parent);
         if(!match(TOKEN_TYPE_RIGHT_BRACKET)){
             error(PARSER_ERROR_SYNTAX);
         }
@@ -182,7 +188,7 @@ ASTNode* parse_relation_expression(ASTNode* parent){
     ASTNode* left = parse_expression(parent);
     if(!left) return NULL;
 
-    while (current_token.type == TOKEN_TYPE_LTN || current_token.type == TOKEN_TYPE_MTN ||
+    if (current_token.type == TOKEN_TYPE_LTN || current_token.type == TOKEN_TYPE_MTN ||
            current_token.type == TOKEN_TYPE_MEQ || current_token.type == TOKEN_TYPE_LEQ ||
            current_token.type == TOKEN_TYPE_EQ || current_token.type == TOKEN_TYPE_NEQ) {
         
@@ -228,6 +234,7 @@ ASTNode* parse_function_declaration(ASTNode* parent)
 ASTNode* parse_return(ASTNode* parent){
     advance_token();
     ASTNode* return_statement = new_ast_node(NODE_RETURN,"return",parent);
+    if(current_token.type == TOKEN_TYPE_SEMICOLON) return return_statement;
     return_statement->left = parse_relation_expression(return_statement);
     return return_statement;
 }
@@ -281,14 +288,14 @@ ASTNode* parse_parameters(ASTNode* parent){
 ASTNode* parse_data_type(ASTNode* parent)
 {
     ASTNode* data_type = NULL;
-    Variable nullable;
-    if(match(TOKEN_TYPE_QUESTION)) nullable.i32 = 1;
+    ASTNode* nullable = NULL;
+    if(match(TOKEN_TYPE_QUESTION)) nullable = new_ast_node(NODE_NULLABLE,"nullable_node",parent);
     if(current_token.attribute.keyword == KEYWORD_I32) data_type = new_ast_node(NODE_INT32,current_token.lexeme,parent);
     if(current_token.attribute.keyword == KEYWORD_F64) data_type = new_ast_node(NODE_FLOAT64,current_token.lexeme,parent);
     if(current_token.attribute.keyword == KEYWORD_U8) data_type = new_ast_node(NODE_U8,current_token.lexeme,parent);
     if(current_token.attribute.keyword == KEYWORD_VOID) data_type = new_ast_node(NODE_VOID,current_token.lexeme,parent);
     if(data_type == NULL) error(PARSER_ERROR_SYNTAX);
-    data_type->variable = nullable;
+    if(nullable != NULL) data_type->left = nullable;
     advance_token();
     return data_type;
 }
@@ -362,20 +369,34 @@ ASTNode* parse_if(ASTNode* parent){
     return statement_name;
 }
 
-ASTNode* parse_while(ASTNode* parent){
+ASTNode* parse_loop(ASTNode* parent){
+    char* loop_lexeme; NodeType loop_node;
+    if(current_token.attribute.keyword == KEYWORD_FOR){
+        loop_lexeme = "for_statement"; loop_node = NODE_FOR_STATEMENT;
+    } else {
+        loop_lexeme = "while_statement"; loop_node = NODE_WHILE_STATEMENT;
+    }
+
     advance_token();
     if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
-    ASTNode* statement_name = new_ast_node(NODE_WHILE_STATEMENT,"while_statement",parent);
-    
+    ASTNode* statement_name = new_ast_node(loop_node,loop_lexeme,parent);
     statement_name->left = parse_relation_expression(statement_name);
     if(!match(TOKEN_TYPE_RIGHT_BRACKET)) error(PARSER_ERROR_SYNTAX);
 
-    statement_name->right = new_ast_node(NODE_EMPTY,"empty",statement_name);
-
-    if(match(TOKEN_TYPE_PIPE)){
-        statement_name->right = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,statement_name);
-        if(!match(TOKEN_TYPE_IDENTIFIER)) error(PARSER_ERROR_SYNTAX);
-        if(!match(TOKEN_TYPE_PIPE)) error(PARSER_ERROR_SYNTAX);
+    if(loop_node == NODE_WHILE_STATEMENT){
+        statement_name->right = new_ast_node(NODE_EMPTY,"empty",statement_name);
+        if(match(TOKEN_TYPE_PIPE)){
+            statement_name->right = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,statement_name);
+            if(!match(TOKEN_TYPE_IDENTIFIER)) error(PARSER_ERROR_SYNTAX);
+            if(!match(TOKEN_TYPE_PIPE)) error(PARSER_ERROR_SYNTAX);
+        }
+    }
+    else{
+        if(match(TOKEN_TYPE_PIPE)){
+            statement_name->right = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,statement_name);
+            if(!match(TOKEN_TYPE_IDENTIFIER)) error(PARSER_ERROR_SYNTAX);
+            if(!match(TOKEN_TYPE_PIPE)) error(PARSER_ERROR_SYNTAX);
+        }
     }
 
     if(!match(TOKEN_TYPE_LEFT_BRACE)) error(PARSER_ERROR_SYNTAX);
@@ -383,6 +404,15 @@ ASTNode* parse_while(ASTNode* parent){
     if(!match(TOKEN_TYPE_RIGHT_BRACE)) error(PARSER_ERROR_SYNTAX);
 
     return statement_name;
+}
+
+ASTNode* parse_iteration_statement(ASTNode* parent){
+    if(current_token.attribute.keyword == KEYWORD_CONTINUE){
+        advance_token();
+        return new_ast_node(NODE_CONTINUE_STATEMENT,"continue",parent);
+    }
+    advance_token();
+    return new_ast_node(NODE_BREAK_STATEMENT,"break",parent);
 }
 
 ASTNode* parse_prolog(ASTNode* parent){
@@ -408,6 +438,8 @@ ASTNode* parse_code_block(ASTNode* parent) {
     ASTNode* statements = NULL;
     ASTNode* current_statement = NULL;
     ASTNode* last_statement = NULL;
+    
+    if(current_token.type == TOKEN_TYPE_RIGHT_BRACE) return code_block;
 
     current_statement = parse_statement(code_block);
     statements = current_statement;
@@ -417,7 +449,7 @@ ASTNode* parse_code_block(ASTNode* parent) {
 
     while (current_token.type != TOKEN_TYPE_EOF && current_token.type != TOKEN_TYPE_RIGHT_BRACE) {
         if(current_statement) last_statement = current_statement;
-        current_statement = parse_statement(code_block);
+        current_statement = parse_statement(last_statement);
         last_statement->left = current_statement;
     }
 
@@ -455,8 +487,13 @@ ASTNode* parse_statement(ASTNode* parent) {
             return statement_node;
             break;
         case KEYWORD_WHILE:
-            statement_node->right = parse_while(statement_node);
+        case KEYWORD_FOR:
+            statement_node->right = parse_loop(statement_node);
             return statement_node;
+            break;
+        case KEYWORD_CONTINUE:
+        case KEYWORD_BREAK:
+            statement_node->right = parse_iteration_statement(statement_node);
             break;
         default:
             error(PARSER_ERROR_SYNTAX);
@@ -479,24 +516,17 @@ ASTNode* parse_statement(ASTNode* parent) {
 
 void print_ast(ASTNode* node, int depth, bool is_left,bool color) {
     if (!node) return;
-
-    // Print indentation
     for (int i = 0; i < depth; ++i) {
         if (i == depth - 1) {
-            // If it's the last level, print a branch (├── for left, └── for right)
             printf(is_left ? "├── " : "└── ");
         } else {
-            // Print vertical lines for connecting branches
             printf("    ");
         }
     }
+    printf( "Node Type: %d," " Lexeme: %s ,flag=%d\n" , node->type, node->lexeme ? node->lexeme : "NULL",node->retype_flag);
 
-    // Print current node details
-    printf( "Node Type: %d," " Lexeme: %s \n" , node->type, node->lexeme ? node->lexeme : "NULL");
-
-    // Recur for the left child, with proper branch marking
-    if (node->left || node->right) { // If there are children, print them
-        print_ast(node->left, depth + 1, true,color);  // Left child, true -> it’s a left node
-        print_ast(node->right, depth + 1, false,color); // Right child, false -> it’s a right node
+    if (node->left || node->right) {
+        print_ast(node->left, depth + 1, true,color);  
+        print_ast(node->right, depth + 1, false,color); 
     }
 }

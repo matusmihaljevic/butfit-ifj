@@ -1,0 +1,26 @@
+const ifj = @import("ifj24.zig");
+
+
+pub fn main() void {
+    
+    const a = ifj.readi32();
+    if (a) |val| {           
+        if (val < 0) {
+            ifj.write("Faktorial ");
+            ifj.write(val);
+            ifj.write("Nejde\n");
+        } else {
+            var vysledok: i32 = 1;
+            var d = val;
+            while (d > 0) {
+                vysledok = vysledok * d;
+                d = d - 1;
+            }
+            ifj.write("Vysledok: ");
+            ifj.write(vysledok);
+            ifj.write("\n");
+        }
+    } else {
+        ifj.write("ERROR aaaa \n");
+    }
+}

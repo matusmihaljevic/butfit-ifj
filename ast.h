@@ -16,6 +16,10 @@
 #define AST_H
 
 #include<stdlib.h>
+#define INT_TO_FLOAT_op1 0
+#define INT_TO_FLOAT_op2 1
+#define FLOAT_TO_INT_op1 2
+#define FLOAT_TO_INT_op2 3
 
 /**
  * @brief Enum representing different types of AST nodes.
@@ -36,12 +40,16 @@ typedef enum {
     NODE_BINARY_OP,             /**< Represents a binary operation (e.g., addition, subtraction, relation ...). */
     NODE_NUMBER,                /**< Represents a numeric value. */
     NODE_NULL,                  /**< Represents a null value. */
+    NODE_NULLABLE,              /**< Represents a nullable data type. */
     NODE_INT32,                 /**< Represents a 32-bit integer. */
     NODE_FLOAT64,               /**< Represents a 64-bit floating-point number. */
     NODE_U8,                    /**< Represents an 8-bit unsigned character string (usually a string literal). */
     NODE_IDENTIFIER,            /**< Represents an identifier (e.g., variable name). */
     NODE_IF_STATEMENT,          /**< Represents an if statement. */
     NODE_WHILE_STATEMENT,       /**< Represents a while loop statement. */
+    NODE_FOR_STATEMENT,         /**< Represents a for loop statement. */
+    NODE_CONTINUE_STATEMENT,    /**< Represents a for continue statement. */
+    NODE_BREAK_STATEMENT,       /**< Represents a for break statement. */
     NODE_ASSIGNMENT,            /**< Represents an assignment statement. */
     NODE_PROLOG,                /**< Represents a prolog node, typically used for function headers. */
     NODE_VOID,                  /**< Represents a void type or return. */
@@ -72,6 +80,7 @@ typedef struct ASTNode {
     NodeType type;            /**< Type of the node (as defined in NodeType enum). */
     char* lexeme;             /**< Lexeme associated with the node (e.g., an identifier or operator). */
     Variable variable;        /**< Value associated with the node (if applicable). */
+    int retype_flag;          /**< Flag indicating implicit retyping */
     struct ASTNode* left;     /**< Pointer to the left child node. */
     struct ASTNode* right;    /**< Pointer to the right child node. */
     struct ASTNode* parent;   /**< Pointer to the parent node. */

@@ -1,0 +1,13 @@
+const ifj = @import("ifj24.zig");
+
+pub fn main() void {
+
+var a = 10;
+if (a == 10) {
+    ifj.write("Equal \n");
+} else {
+    ifj.write("Not equal\n");
+}
+}
+
+// Očekávaný výstup: Equal

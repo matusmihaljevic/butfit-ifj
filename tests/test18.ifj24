@@ -1,0 +1,22 @@
+const ifj = @import("ifj24.zig");
+
+pub fn main() void {
+    var count: i32 = 0;
+    var sum: i32 = 0;
+    var a = 1;
+
+    while (count <= 10) {
+        if(count <= 3)
+        {
+            sum = sum + a;
+        }
+        else
+        {
+          sum = sum + 0;
+        }
+        sum = sum + a;
+        count = count + 1;
+    }
+    ifj.write(sum);
+    ifj.write("\n");
+}

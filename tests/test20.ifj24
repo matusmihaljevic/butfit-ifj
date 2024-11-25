@@ -1,0 +1,15 @@
+const ifj = @import("ifj24.zig");
+
+pub fn max(a: i32, b: i32) i32 {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+pub fn main() void {
+    var result: i32 = max(42, 15);
+    ifj.write(result); // Očakávaný výsledok: 42
+    ifj.write("\n");
+}
