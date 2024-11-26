@@ -9,19 +9,14 @@
 
 #include"codegen.h"
 #include"dstring.h"
+#include"semantic.h"
 DString Output;
 ASTNode* root_node;
-
-char* id = 'A';
-char* cycle_id = 'A';
-char* iter_id = 'A';
 bool prologue_passed = false;
-int loop_count = 0;
-
 
 char* get_CB_hash(ASTNode* node){
 	static char buffer[20];
-    snprintf(buffer, sizeof(buffer), "%p", node->code_block);
+    snprintf(buffer, sizeof(buffer), "%p", (void*) node);
     return buffer;
 }
 
@@ -33,8 +28,8 @@ void generate_parameters(ASTNode* parameter_node){
     }
 
     while (parameter_node->type != NODE_FUNCTION_DECLARATION) {
-        DString_concat(&Output, "DEFVAR LF@", parameter_node->lexeme, "\n", NULL);
-        DString_concat(&Output, "POPS LF@", parameter_node->lexeme, "\n", NULL);
+        DString_concat(&Output, "DEFVAR LF@", parameter_node->lexeme,"_",get_CB_hash(parameter_node->code_block),"\n", NULL);
+        DString_concat(&Output, "POPS LF@", parameter_node->lexeme,"_",get_CB_hash(parameter_node->code_block), "\n", NULL);
         parameter_node = parameter_node->parent;
     }
 
@@ -72,16 +67,19 @@ void generate_function_decl(ASTNode* function_decl_node){
 
 void generate_var_decl(ASTNode* decl_node){
 
-    char* curr_id = id++;
-    DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node),"\n",NULL);
-	if(decl_node->right->right != NULL) generate_assignment(decl_node->right->right);
+    DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->code_block),"\n",NULL);
+	if(decl_node->right->right != NULL && decl_node->right->right->type == NODE_ASSIGNMENT)	generate_assignment(decl_node->right->right,true);
+
 }
 
-void generate_assignment(ASTNode* assignment_node){
+void generate_assignment(ASTNode* assignment_node, bool declaration){
     if(!strcmp("assignment",assignment_node->lexeme)) assignment_node = assignment_node->right->left;
+
     generate_expression(assignment_node->right);
+
     if(!strcmp("_",assignment_node->left->lexeme)) DString_concat(&Output,"POPS GF@",assignment_node->left->lexeme,"\n",NULL);
-    else DString_concat(&Output,"POPS LF@",assignment_node->left->lexeme,"_",get_CB_hash(assignment_node->parent->parent),"\n",NULL);
+    else if(declaration)	DString_concat(&Output,"POPS LF@",assignment_node->left->lexeme,"_",get_CB_hash(assignment_node->parent->parent->code_block),"\n",NULL);
+	else DString_concat(&Output,"POPS LF@",assignment_node->left->lexeme,"_",get_CB_hash(assignment_node->left->code_block),"\n",NULL);
 }
 
 void generate_expression(ASTNode* expression_root_node){
@@ -100,7 +98,7 @@ void generate_expression(ASTNode* expression_root_node){
     generate_expression(expression_root_node->right);
 
     if(expression_root_node->type == NODE_IDENTIFIER){
-        DString_concat(&Output,"PUSHS LF@",expression_root_node->lexeme,"_",get_CB_hash(expression_root_node),"\n",NULL);
+        DString_concat(&Output,"PUSHS LF@",expression_root_node->lexeme,"_",get_CB_hash(expression_root_node->code_block),"\n",NULL);
     }
     else if(expression_root_node->type == NODE_BINARY_OP){
         generate_binary_op(expression_root_node);
@@ -167,97 +165,85 @@ void generate_built_in_fn_call(ASTNode* built_in_fn_node){
 }
 
 void generate_for_loop(ASTNode* for_node){
-    char* curr_id = id++;
-
-    DString_concat(&Output,"DEFVAR GF@fst_iter_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"MOVE GF@fst_iter_",&curr_id," bool@true\n",NULL);
 
     generate_expression(for_node->left);
-    DString_concat(&Output,"DEFVAR LF@for_string_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"POPS LF@for_string_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"DEFVAR LF@for_counter_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"MOVE LF@for_counter_",&curr_id," int@0\n",NULL);
+    DString_concat(&Output,"DEFVAR LF@for_string_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"POPS LF@for_string_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"DEFVAR LF@for_counter_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"MOVE LF@for_counter_",get_CB_hash(for_node)," int@0\n",NULL);
 
-    if(strcmp(for_node->right->lexeme,"_")) DString_concat(&Output,"DEFVAR LF@",for_node->right->lexeme,"\n",NULL);
-    DString_concat(&Output,"LABEL $for_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"PUSHS LF@for_string_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"PUSHS LF@for_counter_",&curr_id,"\n",NULL);
+    if(!strcmp(for_node->right->lexeme,"_")) DString_concat(&Output,"DEFVAR LF@",for_node->right->lexeme,"_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"LABEL $cycle_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"PUSHS LF@for_string_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"PUSHS LF@for_counter_",get_CB_hash(for_node),"\n",NULL);
     INTERN_FN_ORD
-    DString_concat(&Output,"POPS LF@",for_node->right->lexeme,"\n",NULL);
+    if(!strcmp(for_node->right->lexeme,"_")) DString_concat(&Output,"POPS LF@",for_node->right->lexeme,"_",get_CB_hash(for_node),"\n",NULL);
 
-    loop_count++;
     generate_code_block(for_node->right->left);
-    loop_count--;
 
-    DString_concat(&Output,"PUSHS LF@for_string_",&curr_id,"\n",NULL);
+    DString_concat(&Output,"PUSHS LF@for_string_",get_CB_hash(for_node),"\n",NULL);
     INTERN_FN_LENGHT
-    DString_concat(&Output,"ADD LF@for_counter_",&curr_id," LF@for_counter_",&curr_id," int@1\n",NULL);
-    DString_concat(&Output,"PUSHS LF@for_counter_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"JUMPIFEQS $end_for_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"JUMP $for_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"LABEL $end_for_",&curr_id,"\n",NULL);
+    DString_concat(&Output,"ADD LF@for_counter_",get_CB_hash(for_node)," LF@for_counter_",get_CB_hash(for_node)," int@1\n",NULL);
+    DString_concat(&Output,"PUSHS LF@for_counter_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"JUMPIFEQS $end_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"JUMP $cycle_",get_CB_hash(for_node),"\n",NULL);
+    DString_concat(&Output,"LABEL $end_",get_CB_hash(for_node),"\n",NULL);
 }
 
 
 void generate_while_loop(ASTNode* while_node){
 
-    char* curr_id = cycle_id++;
     if(while_node->right->type == NODE_EMPTY){
-        DString_concat(&Output,"LABEL $cycle_",&curr_id,"\n",NULL);
+        DString_concat(&Output,"LABEL $cycle_",get_CB_hash(while_node),"\n",NULL);
         generate_expression(while_node->left);
         DString_concat(&Output,"PUSHS bool@false\n",NULL);
-        DString_concat(&Output,"JUMPIFEQS $end_cycle_",&curr_id,"\n",NULL);
+        DString_concat(&Output,"JUMPIFEQS $end_cycle_",get_CB_hash(while_node),"\n",NULL);
     }
     else{
         generate_var_decl(while_node);
-        DString_concat(&Output,"LABEL $cycle_",&curr_id,"\n",NULL);
+        DString_concat(&Output,"LABEL $cycle_",get_CB_hash(while_node),"\n",NULL);
         generate_expression(while_node->left);
         DString_concat(&Output,"POPS GF@GF_RESULT\n",NULL);
         DString_concat(&Output,"PUSHS GF@GF_RESULT\n",NULL);
         DString_concat(&Output,"PUSHS nil@nil\n",NULL);
-        DString_concat(&Output,"JUMPIFEQS $end_cycle_",&curr_id,"\n",NULL);
+        DString_concat(&Output,"JUMPIFEQS $end_cycle_",get_CB_hash(while_node),"\n",NULL);
         DString_concat(&Output,"MOVE LF@",while_node->right->lexeme," GF@GF_RESULT\n",NULL);
 
     }
-
-    loop_count++;
     generate_code_block(while_node->right->left);
-    loop_count--;
 
-    DString_concat(&Output,"MOVE GF@fst_iter_",&curr_id," bool@false\n",NULL);
-    DString_concat(&Output,"JUMP $cycle_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"LABEL $end_cycle_",&curr_id,"\n",NULL);
+    DString_concat(&Output,"JUMP $cycle_",get_CB_hash(while_node),"\n",NULL);
+    DString_concat(&Output,"LABEL $end_cycle_",get_CB_hash(while_node),"\n",NULL);
 }
 
-void generate_continue(){
-    return;
+void generate_continue(char* hash){
+	DString_concat(&Output,"JUMP $cycle_",hash,"\n",NULL);
 }
 
-void generate_break(){
-    return;
+void generate_break(char* hash){
+    DString_concat(&Output,"JUMP $end_",hash,"\n",NULL);
 }
 
 void generate_if(ASTNode* if_node){
 
-    char* curr_id = id++;
     generate_expression(if_node->left);
 
     if(if_node->right->type == NODE_EMPTY){
-        DString_concat(&Output,"PUSHS bool@true\nJUMPIFNEQS $else_",&curr_id,"\n",NULL);
+        DString_concat(&Output,"PUSHS bool@true\nJUMPIFNEQS $else_",get_CB_hash(if_node),"\n",NULL);
     }
     else{
         DString_concat(&Output,"POPS GF@GF_RESULT\nTYPE GF@GF_RESULT GF@GF_RESULT\n",NULL);
-        DString_concat(&Output,"JUMPIFEQ $else_",&curr_id," GF@GF_RESULT string@nil\n",NULL);
+        DString_concat(&Output,"JUMPIFEQ $else_",get_CB_hash(if_node)," GF@GF_RESULT string@nil\n",NULL);
 
         generate_var_decl(if_node);
         generate_expression(if_node->left);
         DString_concat(&Output,"POPS LF@",if_node->right->lexeme,"\n",NULL);
     }
     generate_code_block(if_node->right->left);
-    DString_concat(&Output,"JUMP $end_if_",&curr_id,"\n",NULL);
-    DString_concat(&Output,"LABEL $else_",&curr_id,"\n",NULL);
+    DString_concat(&Output,"JUMP $end_",get_CB_hash(if_node),"\n",NULL);
+    DString_concat(&Output,"LABEL $else_",get_CB_hash(if_node),"\n",NULL);
     generate_code_block(if_node->right->right);
-    DString_concat(&Output,"LABEL $end_if_",&curr_id,"\n",NULL);
+    DString_concat(&Output,"LABEL $end_",get_CB_hash(if_node),"\n",NULL);
 }
 
 void generate_return(ASTNode* return_node){
@@ -280,7 +266,7 @@ void generate_statement(ASTNode* statement_node){
         generate_var_decl(statement_node->right);
         break;
     case NODE_ASSIGNMENT:
-        generate_assignment(statement_node->right);
+        generate_assignment(statement_node->right,false);
         break;
     case NODE_FUNCTION_CALL:
         generate_fn_call(statement_node->right);
@@ -301,10 +287,10 @@ void generate_statement(ASTNode* statement_node){
         generate_return(statement_node->right);
         break;
     case NODE_CONTINUE_STATEMENT:
-        generate_continue();
+        generate_continue(get_CB_hash(find_parent_code_block(statement_node)));
         break;
     case NODE_BREAK_STATEMENT:
-        generate_break();
+        generate_break(get_CB_hash(find_parent_code_block(statement_node)));
         break;
     default:
         break;
