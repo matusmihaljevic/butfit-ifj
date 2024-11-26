@@ -69,7 +69,7 @@ void generate_function_decl(ASTNode* function_decl_node){
 
 void generate_var_decl(ASTNode* decl_node){
 
-	if(loop_count > 0)	DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(decl_node)," GF@fst_iter_",&iter_id+loop_count-1," bool@false\n",NULL);
+	if(loop_count > 0)	DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(decl_node)," GF@fst_iter_",&iter_id," bool@false\n",NULL);
 	if(decl_node->type == NODE_IF_STATEMENT || decl_node->type == NODE_WHILE_STATEMENT)DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->right->code_block),"\n",NULL);
 	else DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->code_block),"\n",NULL);
 	if(loop_count > 0)	DString_concat(&Output,"LABEL $skip_dec_",get_CB_hash(decl_node),"\n",NULL);
@@ -197,17 +197,18 @@ void generate_for_loop(ASTNode* for_node){
 
 void generate_while_loop(ASTNode* while_node){
 
-	iter_id++;
+	char* current_id = ++iter_id;
 
 	if(loop_count == 0){
-        DString_concat(&Output,"DEFVAR GF@fst_iter_",&iter_id,"\n",NULL);
-        DString_concat(&Output,"MOVE GF@fst_iter_",&iter_id," bool@true\n",NULL);
+        DString_concat(&Output,"DEFVAR GF@fst_iter_",&current_id,"\n",NULL);
+        DString_concat(&Output,"MOVE GF@fst_iter_",&current_id," bool@true\n",NULL);
     }
     else{
-        DString_concat(&Output,"JUMPIFEQ $skip_dec_",&iter_id," GF@fst_iter_",&iter_id+loop_count-1," bool@false\n",NULL);
-        DString_concat(&Output,"DEFVAR GF@fst_iter_",&iter_id,"\n",NULL);
-        DString_concat(&Output,"MOVE GF@fst_iter_",&iter_id," bool@true\n",NULL);
-        DString_concat(&Output,"LABEL $skip_dec_",&iter_id,"\n",NULL);
+		char* previous_c = current_id - 1;
+        DString_concat(&Output,"JUMPIFEQ $skip_dec_",&current_id," GF@fst_iter_",&previous_c," bool@false\n",NULL);
+        DString_concat(&Output,"DEFVAR GF@fst_iter_",&current_id,"\n",NULL);
+        DString_concat(&Output,"MOVE GF@fst_iter_",&current_id," bool@true\n",NULL);
+        DString_concat(&Output,"LABEL $skip_dec_",&current_id,"\n",NULL);
     }
     if(while_node->right->type == NODE_EMPTY){
         DString_concat(&Output,"LABEL $cycle_",get_CB_hash(while_node),"\n",NULL);
@@ -230,7 +231,7 @@ void generate_while_loop(ASTNode* while_node){
     generate_code_block(while_node->right->left);
 	loop_count--;
 
-	DString_concat(&Output,"MOVE GF@fst_iter_",&iter_id," bool@false\n",NULL);
+	DString_concat(&Output,"MOVE GF@fst_iter_",&current_id," bool@false\n",NULL);
     DString_concat(&Output,"JUMP $cycle_",get_CB_hash(while_node),"\n",NULL);
     DString_concat(&Output,"LABEL $end_cycle_",get_CB_hash(while_node),"\n",NULL);
 }
@@ -332,6 +333,7 @@ void generate_code_block(ASTNode* code_block_node){
 
 char* generate_program(ASTNode* root){
     root_node = root;
+	iter_id--;
     DString_init(&Output);
     PROLOGUE
     generate_code_block(root_node->left);
