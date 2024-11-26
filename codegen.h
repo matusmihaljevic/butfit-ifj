@@ -17,8 +17,8 @@
 #include "error.h"
 #include <stdio.h>
 
-
 char* get_CB_hash(ASTNode* node);
+
 /**
  * Generates code for the entire program based on the AST root node.
  *
@@ -67,7 +67,7 @@ void generate_arguments(ASTNode* argument_node);
  *
  * @param assignment_node Node representing an assignment.
  */
-void generate_assignment(ASTNode* assignment_node);
+void generate_assignment(ASTNode* assignment_node,bool declaration);
 
 /**
  * Generates code for a function call AST node.
