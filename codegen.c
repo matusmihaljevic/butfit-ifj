@@ -13,6 +13,8 @@
 DString Output;
 ASTNode* root_node;
 bool prologue_passed = false;
+int loop_count = 0;
+char* iter_id = 'A';
 
 char* get_CB_hash(ASTNode* node){
 	static char buffer[20];
@@ -66,10 +68,11 @@ void generate_function_decl(ASTNode* function_decl_node){
 }
 
 void generate_var_decl(ASTNode* decl_node){
-	if(decl_node->type == NODE_IF_STATEMENT || decl_node->type == NODE_WHILE_STATEMENT){
-		DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->right->code_block),"\n",NULL);
-	}
-    else DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->code_block),"\n",NULL);
+
+	if(loop_count > 0)	DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(decl_node)," GF@fst_iter_",&iter_id+loop_count-1," bool@false\n",NULL);
+	if(decl_node->type == NODE_IF_STATEMENT || decl_node->type == NODE_WHILE_STATEMENT)DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->right->code_block),"\n",NULL);
+	else DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->code_block),"\n",NULL);
+	if(loop_count > 0)	DString_concat(&Output,"LABEL $skip_dec_",get_CB_hash(decl_node),"\n",NULL);
 	if(decl_node->right->right != NULL && decl_node->right->right->type == NODE_ASSIGNMENT)	generate_assignment(decl_node->right->right,true);
 }
 
@@ -194,6 +197,18 @@ void generate_for_loop(ASTNode* for_node){
 
 void generate_while_loop(ASTNode* while_node){
 
+	iter_id++;
+
+	if(loop_count == 0){
+        DString_concat(&Output,"DEFVAR GF@fst_iter_",&iter_id,"\n",NULL);
+        DString_concat(&Output,"MOVE GF@fst_iter_",&iter_id," bool@true\n",NULL);
+    }
+    else{
+        DString_concat(&Output,"JUMPIFEQ $skip_dec_",&iter_id," GF@fst_iter_",&iter_id+loop_count-1," bool@false\n",NULL);
+        DString_concat(&Output,"DEFVAR GF@fst_iter_",&iter_id,"\n",NULL);
+        DString_concat(&Output,"MOVE GF@fst_iter_",&iter_id," bool@true\n",NULL);
+        DString_concat(&Output,"LABEL $skip_dec_",&iter_id,"\n",NULL);
+    }
     if(while_node->right->type == NODE_EMPTY){
         DString_concat(&Output,"LABEL $cycle_",get_CB_hash(while_node),"\n",NULL);
         generate_expression(while_node->left);
@@ -208,11 +223,14 @@ void generate_while_loop(ASTNode* while_node){
         DString_concat(&Output,"PUSHS GF@GF_RESULT\n",NULL);
         DString_concat(&Output,"PUSHS nil@nil\n",NULL);
         DString_concat(&Output,"JUMPIFEQS $end_cycle_",get_CB_hash(while_node),"\n",NULL);
-        DString_concat(&Output,"MOVE LF@",while_node->right->lexeme," GF@GF_RESULT\n",NULL);
+        DString_concat(&Output,"MOVE LF@",while_node->right->lexeme,"_",get_CB_hash(while_node)," GF@GF_RESULT\n",NULL);
 
     }
+	loop_count++;
     generate_code_block(while_node->right->left);
+	loop_count--;
 
+	DString_concat(&Output,"MOVE GF@fst_iter_",&iter_id," bool@false\n",NULL);
     DString_concat(&Output,"JUMP $cycle_",get_CB_hash(while_node),"\n",NULL);
     DString_concat(&Output,"LABEL $end_cycle_",get_CB_hash(while_node),"\n",NULL);
 }
