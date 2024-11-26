@@ -66,10 +66,11 @@ void generate_function_decl(ASTNode* function_decl_node){
 }
 
 void generate_var_decl(ASTNode* decl_node){
-
-    DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->code_block),"\n",NULL);
+	if(decl_node->type == NODE_IF_STATEMENT || decl_node->type == NODE_WHILE_STATEMENT){
+		DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->right->code_block),"\n",NULL);
+	}
+    else DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->code_block),"\n",NULL);
 	if(decl_node->right->right != NULL && decl_node->right->right->type == NODE_ASSIGNMENT)	generate_assignment(decl_node->right->right,true);
-
 }
 
 void generate_assignment(ASTNode* assignment_node, bool declaration){
