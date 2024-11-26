@@ -411,12 +411,10 @@ ASTNode* parse_loop(ASTNode* parent){
 }
 
 ASTNode* parse_iteration_statement(ASTNode* parent){
-    if(current_token.attribute.keyword == KEYWORD_CONTINUE){
-        advance_token();
-        return new_ast_node(NODE_CONTINUE_STATEMENT,"continue",parent);
-    }
-    advance_token();
-    return new_ast_node(NODE_BREAK_STATEMENT,"break",parent);
+	int oi_m8 = current_token.attribute.i32;
+	advance_token();advance_token();
+    if(oi_m8 == KEYWORD_CONTINUE)	return new_ast_node(NODE_CONTINUE_STATEMENT,"continue",parent);
+    else return new_ast_node(NODE_BREAK_STATEMENT,"break",parent);
 }
 
 ASTNode* parse_prolog(ASTNode* parent){
@@ -498,6 +496,7 @@ ASTNode* parse_statement(ASTNode* parent) {
         case KEYWORD_CONTINUE:
         case KEYWORD_BREAK:
             statement_node->right = parse_iteration_statement(statement_node);
+			return statement_node;
             break;
         default:
             error(PARSER_ERROR_SYNTAX);
