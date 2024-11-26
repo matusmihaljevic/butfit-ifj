@@ -238,7 +238,7 @@ void generate_if(ASTNode* if_node){
 
         generate_var_decl(if_node);
         generate_expression(if_node->left);
-        DString_concat(&Output,"POPS LF@",if_node->right->lexeme,"\n",NULL);
+        DString_concat(&Output,"POPS LF@",if_node->right->lexeme,"_",get_CB_hash(if_node->right->code_block),"\n",NULL);
     }
     generate_code_block(if_node->right->left);
     DString_concat(&Output,"JUMP $end_",get_CB_hash(if_node),"\n",NULL);
