@@ -466,27 +466,28 @@ void check_return(ASTNode* return_node) {
 	RBNode* parent_fn = find_parent_function(return_node);
 	if (return_node->left != NULL) {
 		if (parent_fn->data->varType == VOID) {
-			print_error(SEMANTIC_ERROR_WRONG_PARAMS, 0, "Return in void function");
-			exit(SEMANTIC_ERROR_WRONG_PARAMS);
+			print_error(SEMANTIC_ERROR_RETURN_EXPR, 0, "Return in void function");
+			exit(SEMANTIC_ERROR_RETURN_EXPR);
 		}
 		compute_expression_type(return_node->left);
 		TypeProperties* exp_type = stack_property_pop(&type_properties);
 		if (exp_type->varType != NULL_C) {
             if (parent_fn->data->varType != exp_type->varType || (exp_type->nullable && !parent_fn->data->nullable) || exp_type->varType == VOID) {
-                print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Return with wrong parameter type");
-                exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+                print_error(SEMANTIC_ERROR_WRONG_PARAMS, 0, "Return with wrong parameter type");
+                exit(SEMANTIC_ERROR_WRONG_PARAMS);
             }
         } else if (!parent_fn->data->nullable) {
-            print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Return with wrong parameter type (null)");
-            exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+            print_error(SEMANTIC_ERROR_WRONG_PARAMS, 0, "Return with wrong parameter type (null)");
+            exit(SEMANTIC_ERROR_WRONG_PARAMS);
         }
 		free(exp_type);
 	} else {
 		if (parent_fn->data->varType != VOID) {
-			print_error(SEMANTIC_ERROR_WRONG_PARAMS, 0, "Empty return in non-void function");
-			exit(SEMANTIC_ERROR_WRONG_PARAMS);
+			print_error(SEMANTIC_ERROR_RETURN_EXPR, 0, "Empty return in non-void function");
+			exit(SEMANTIC_ERROR_RETURN_EXPR);
 		}
 	}
+	parent_fn->data->return_found = true;
 }
 
 void semantic_check_statement(ASTNode* statement) {
@@ -555,6 +556,11 @@ void semantic_check_functions(ASTNode* main_code_block) {
         }
         semantic_check_body_block(current_function->right->right->right);
         remove_RBNodes_by_code_block(current_function->right->right);
+		RBNode* fn = find_RBNode(symtable->root, current_function->right->right->lexeme);
+		if (!fn->data->return_found && fn->data->varType != VOID) {
+			print_error(SEMANTIC_ERROR_RETURN_EXPR, 0, "Function without return");
+			exit(SEMANTIC_ERROR_RETURN_EXPR);
+		}
         current_function = current_function->left;
     }
 }
