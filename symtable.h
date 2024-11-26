@@ -77,13 +77,10 @@ void fix_violation(RedBlackTree* tree, RBNode* z);
 int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, bool nullable, bool changed, ASTNode* ptr);
 
 // Find a node in the tree
-RBNode* find_RBNode(RedBlackTree* tree, RBNode* root, char* name);
+RBNode* find_RBNode(RBNode* root, char* name);
 
 // Delete a node from the tree
 void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete);
-
-// Function to recursively traverse and delete nodes based on data
-void remove_RBNodes_by_code_block(RedBlackTree* tree, RBNode* node, ASTNode* codeBlock);
 
 // In-Order Traversal (for testing)
 void in_order_traversal(RBNode* node, RBNode* NIL);

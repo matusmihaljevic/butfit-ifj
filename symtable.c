@@ -241,15 +241,15 @@ void fix_deletion(RedBlackTree* tree, RBNode* x) {
     x->color = BLACK; // Ensure the node is black
 }
 
-RBNode* find_RBNode(RedBlackTree* tree, RBNode* root, char* name){
+RBNode* find_RBNode(RBNode* root, char* name) {
     // Ak je strom prázdny alebo ak sme našli uzol s hľadaným názvom
     if (root == NULL || strcmp(root->name.data, name) == 0)
         return root;
     // Porovnávame názov s aktuálnym uzlom, aby sme určili, kam pokračovať
     if (strcmp(name, root->name.data) < 0)
-        return find_RBNode(tree, root->left, name);
+        return find_RBNode(root->left, name);
     else
-        return find_RBNode(tree, root->right, name);
+        return find_RBNode(root->right, name);
 }
 
 void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
@@ -321,25 +321,6 @@ void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
     if (originalColor == BLACK) {
         fix_deletion(tree, x);
     }
-}
-
-void remove_RBNodes_by_code_block(RedBlackTree* tree, RBNode* node, ASTNode* code_block) {
-    if (node == tree->NIL)
-        return; // Base case: reached the sentinel node
-
-    // First, traverse the left subtree
-    if (node->left != NULL)
-        remove_RBNodes_by_code_block(tree, node->left, code_block);
-    // Then traverse the right subtree
-    if (node->right != NULL)
-        remove_RBNodes_by_code_block(tree, node->right, code_block);
-
-    // Check if the current node's data is the same as the code block
-    if (node->name.data != NULL && node->data->ptr == code_block) {
-        delete_RBNode(tree, node);
-        remove_RBNodes_by_code_block(tree, tree->root, code_block); // After deletion, start from the root again
-    }
-
 }
 
 void in_order_traversal(RBNode* node, RBNode* NIL) {

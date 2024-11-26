@@ -25,4 +25,6 @@ void compute_expression_type(ASTNode* expression_root);
 
 void semantic_check_body_block(ASTNode* fn_code_block);
 
+ASTNode* find_parent_code_block(ASTNode* node);
+
 #endif // SEMANTIC_H

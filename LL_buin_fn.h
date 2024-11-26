@@ -47,6 +47,7 @@ typedef struct Built_in_node {
     char *name;                  /**< Name of the function */
     TypeProperties ret_type;     /**< Return type of the function */
     TypeProperties *parameters;  /**< Array of parameter type properties */
+    int param_count;  /**< Pointer to the next node in the list */
     struct Built_in_node *next;  /**< Pointer to the next node in the list */
 } Built_in_node;
 
