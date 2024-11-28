@@ -4,7 +4,7 @@
  * @file symtable.h
  * @brief Definitions for Red Black Tree structures and operations.
  *
- * @author Adam Bojnanský
+ * @author Adam Bojnanský <xbojnaa00@stud.fit.vutbr.cz>
  * @date 2024-10-23
  */
 
@@ -79,6 +79,8 @@ int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType v
 
 // Find a node in the tree
 RBNode* find_RBNode(RBNode* root, char* name);
+
+void transplant(RedBlackTree* tree, RBNode* u, RBNode* v);
 
 // Delete a node from the tree
 void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete);

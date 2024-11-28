@@ -4,8 +4,7 @@
  * @file symtable.c
  * @brief Implementation of operations with Red Black Tree.
  *
- * @author Adam Bojnanský
- * @date 2024-10-23
+ * @author Adam Bojnanský <xbojnaa00@stud.fit.vutbr.cz>
  */
 
 #include "symtable.h"
@@ -183,6 +182,10 @@ RBNode* minimum_RBTree(RedBlackTree* tree, RBNode* node) {
 
 void fix_deletion(RedBlackTree* tree, RBNode* x) {
     while (x != tree->root && x->color == BLACK) {
+        if (x->parent == NULL) {
+            break;
+        }
+
         if (x == x->parent->left) {
             RBNode* w = x->parent->right; // Sibling
 
@@ -193,22 +196,26 @@ void fix_deletion(RedBlackTree* tree, RBNode* x) {
                 w = x->parent->right;
             }
 
-            if (w->left->color == BLACK && w->right->color == BLACK) {
+            if ((w->left == tree->NIL || w->left->color == BLACK) &&
+                (w->right == tree->NIL || w->right->color == BLACK)) {
                 w->color = RED;
                 x = x->parent;
             } else {
-                if (w->right->color == BLACK) {
-                    w->left->color = BLACK;
+                if (w->right == tree->NIL || w->right->color == BLACK) {
+                    if (w->left != tree->NIL) {
+                        w->left->color = BLACK;
+                    }
                     w->color = RED;
                     right_rotate(tree, w);
                     w = x->parent->right;
                 }
-
                 w->color = x->parent->color;
                 x->parent->color = BLACK;
-                w->right->color = BLACK;
+                if (w->right != tree->NIL) {
+                    w->right->color = BLACK;
+                }
                 left_rotate(tree, x->parent);
-                x = tree->root; // Exit loop
+                x = tree->root;
             }
         } else {
             RBNode* w = x->parent->left; // Sibling
@@ -220,26 +227,30 @@ void fix_deletion(RedBlackTree* tree, RBNode* x) {
                 w = x->parent->left;
             }
 
-            if (w->right->color == BLACK && w->left->color == BLACK) {
+            if ((w->right == tree->NIL || w->right->color == BLACK) &&
+                (w->left == tree->NIL || w->left->color == BLACK)) {
                 w->color = RED;
                 x = x->parent;
             } else {
-                if (w->left->color == BLACK) {
-                    w->right->color = BLACK;
+                if (w->left == tree->NIL || w->left->color == BLACK) {
+                    if (w->right != tree->NIL) {
+                        w->right->color = BLACK;
+                    }
                     w->color = RED;
                     left_rotate(tree, w);
                     w = x->parent->left;
                 }
-
                 w->color = x->parent->color;
                 x->parent->color = BLACK;
-                w->left->color = BLACK;
+                if (w->left != tree->NIL) {
+                    w->left->color = BLACK;
+                }
                 right_rotate(tree, x->parent);
-                x = tree->root; // Exit loop
+                x = tree->root;
             }
         }
     }
-    x->color = BLACK; // Ensure the node is black
+    x->color = BLACK;
 }
 
 RBNode* find_RBNode(RBNode* root, char* name) {
@@ -253,65 +264,52 @@ RBNode* find_RBNode(RBNode* root, char* name) {
         return find_RBNode(root->right, name);
 }
 
+void transplant(RedBlackTree* tree, RBNode* u, RBNode* v) {
+    if (u->parent == NULL) {
+        tree->root = v;
+    } else if (u == u->parent->left) {
+        u->parent->left = v;
+    } else {
+        u->parent->right = v;
+    }
+    if (v != tree->NIL) {
+        v->parent = u->parent;
+    }
+}
+
 void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
     RBNode* z = nodeToDelete;
     RBNode* x, *y;
 
-    // Node not found
-    if (z == tree->NIL)
+    if (z == tree->NIL) {
         return;
+    }
 
     y = z; // Node to be deleted
     Color originalColor = y->color;
 
-    // If the node has two children
     if (z->left == tree->NIL) {
         x = z->right;
-        if (z->parent == NULL) {
-            tree->root = x;
-        } else if (z == z->parent->left) {
-            z->parent->left = x;
-        } else {
-            z->parent->right = x;
-        }
-        x->parent = z->parent;
+        transplant(tree, z, z->right);
     } else if (z->right == tree->NIL) {
         x = z->left;
-        if (z->parent == NULL) {
-            tree->root = x;
-        } else if (z == z->parent->left) {
-            z->parent->left = x;
-        } else {
-            z->parent->right = x;
-        }
-        x->parent = z->parent;
+        transplant(tree, z, z->left);
     } else {
-        y = minimum_RBTree(tree, z->right); // Get successor
+        y = minimum_RBTree(tree, z->right);
         originalColor = y->color;
         x = y->right;
-
         if (y->parent == z) {
-            x->parent = y;
-        } else {
-            if (y->right != tree->NIL) {
-                y->right->parent = y->parent;
+            if (x != tree->NIL) {
+                x->parent = y;
             }
-            y->parent->left = x;
-            y->right = z->right;
-            z->right->parent = y;
-        }
-
-        if (z->parent == NULL) {
-            tree->root = y; // Update root
-        } else if (z == z->parent->left) {
-            z->parent->left = y;
         } else {
-            z->parent->right = y;
+            transplant(tree, y, y->right);
+            y->right = z->right;
+            y->right->parent = y;
         }
-
-        y->parent = z->parent;
+        transplant(tree, z, y);
         y->left = z->left;
-        z->left->parent = y;
+        y->left->parent = y;
         y->color = z->color;
     }
 
