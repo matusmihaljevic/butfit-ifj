@@ -324,15 +324,19 @@ ASTNode* parse_declaration(NodeType type, ASTNode* parent)
 
     if(!match(TOKEN_TYPE_ASSIGN))error(PARSER_ERROR_SYNTAX);
 
-    if(!strcmp(identifier->lexeme,"ifj") && current_token.type == TOKEN_TYPE_KEYWORD &&
-	   current_token.attribute.keyword == KEYWORD_IMPORT && type == NODE_CONST_DECLARATION) {
-        ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"Assignment",identifier);
-        assignment->right = parse_prolog(assignment);
-        assignment->left = new_ast_node(NODE_IDENTIFIER,identifier->lexeme,assignment);
-        identifier->right = assignment;
-        return decl;
+    if(current_token.type == TOKEN_TYPE_KEYWORD &&
+	   current_token.attribute.keyword == KEYWORD_IMPORT &&
+	   type == NODE_CONST_DECLARATION) {
+		if (!strcmp(identifier->lexeme,"ifj")) {
+			ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"Assignment",identifier);
+			assignment->right = parse_prolog(assignment);
+			assignment->left = new_ast_node(NODE_IDENTIFIER,identifier->lexeme,assignment);
+			identifier->right = assignment;
+			return decl;
+		} else {
+			error(PARSER_ERROR_SYNTAX);
+		}
     }
-
 
     identifier->right = parse_assignment(identifier->lexeme,identifier);
     return decl;
