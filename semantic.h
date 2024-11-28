@@ -21,8 +21,10 @@
 void semantic_check(ASTNode* root);
 
 // Spracovanie typu celého výrazu
-void compute_expression_type(ASTNode* expression_root);
+void compute_expression_type(ASTNode* expression_root, bool condition);
 
 void semantic_check_body_block(ASTNode* fn_code_block);
+
+ASTNode* find_parent_code_block(ASTNode* node);
 
 #endif // SEMANTIC_H

@@ -1,17 +1,21 @@
 /**
  * Project: Implementation of the IFJ24 imperative language compiler.
- * 
+ *
+ *
  * @file LL_buin_fc.c
- * @brief Linked list which holds built in functions 
- * 
+ * @brief Linked list which holds built in functions
+ *
+ * @brief Linked list which holds built in functions
+ *
  * This file creates data into a LL of built in functions
- * 
+ *
+ *
  * @author Jaroslav Podmajerský
  */
 
 #include "LL_buin_fn.h"
 
-Built_in_node* createNode(const char *name, TypeProperties ret_type, 
+Built_in_node* createNode(char *name, TypeProperties ret_type,
                  TypeProperties *parameters, size_t param_count) {
     Built_in_node *new_node = (Built_in_node *)malloc(sizeof(Built_in_node));
     if (!new_node) {
@@ -21,6 +25,7 @@ Built_in_node* createNode(const char *name, TypeProperties ret_type,
 
     new_node->name = name;
     new_node->ret_type = ret_type;
+	new_node->param_count = param_count;
 
     new_node->parameters = (TypeProperties *)malloc(param_count * sizeof(TypeProperties));
     if (!new_node->parameters) {
@@ -57,7 +62,8 @@ int init_linked_list(Built_in_node **head) {
     //ifj.readstr ifj.readi32 ifj.readf64
     TypeProperties readstr_ret = {true, true, false, U8};
     Built_in_node *readstr_node = createNode("readstr", readstr_ret, NULL, 0);
-    
+
+
     TypeProperties readi32_ret = {true, true, false, INT};
     Built_in_node *readi32_node = createNode("readi32", readi32_ret, NULL, 0);
 
@@ -119,7 +125,8 @@ int init_linked_list(Built_in_node **head) {
     addNode(head, readf64_node);
 
     addNode(head, write_node);
-    
+
+
     addNode(head, i2f_node);
     addNode(head, f2i_node);
 

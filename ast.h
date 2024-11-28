@@ -20,7 +20,6 @@
 #define INT_TO_FLOAT_op2 1
 #define FLOAT_TO_INT_op1 2
 #define FLOAT_TO_INT_op2 3
-
 /**
  * @brief Enum representing different types of AST nodes.
  *
@@ -77,13 +76,14 @@ typedef union {
  * and pointers to child and parent nodes.
  */
 typedef struct ASTNode {
-    NodeType type;            /**< Type of the node (as defined in NodeType enum). */
-    char* lexeme;             /**< Lexeme associated with the node (e.g., an identifier or operator). */
-    Variable variable;        /**< Value associated with the node (if applicable). */
-    int retype_flag;          /**< Flag indicating implicit retyping */
-    struct ASTNode* left;     /**< Pointer to the left child node. */
-    struct ASTNode* right;    /**< Pointer to the right child node. */
-    struct ASTNode* parent;   /**< Pointer to the parent node. */
+    NodeType type;                /**< Type of the node (as defined in NodeType enum). */
+    char* lexeme;                 /**< Lexeme associated with the node (e.g., an identifier or operator). */
+    Variable variable;            /**< Value associated with the node (if applicable). */
+    int retype_flag;              /**< Flag indicating implicit retyping */
+    struct ASTNode* left;         /**< Pointer to the left child node. */
+    struct ASTNode* right;        /**< Pointer to the right child node. */
+    struct ASTNode* parent;       /**< Pointer to the parent node. */
+    struct ASTNode* code_block;   /**< Pointer to the code_block node. */
 } ASTNode;
 
 /**
