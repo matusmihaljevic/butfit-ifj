@@ -214,7 +214,13 @@ void generate_while_loop(ASTNode* while_node){
     }
     else{
 		char* previous_c = current_id - 1;
-        DString_concat(&Output,"JUMPIFEQ $skip_dec_",&current_id," LF@fst_iter_",&previous_c," bool@false\n",NULL);
+		ASTNode* parent_node = find_parent_code_block(while_node);
+        if(parent_node->parent->parent != NULL && parent_node->parent->parent->type == NODE_IF_STATEMENT){
+            DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(while_node->parent),NULL);
+            DString_concat(&Output," LF@fst_if_",get_CB_hash(parent_node)," bool@false\n",NULL);
+        }
+        else DString_concat(&Output,"JUMPIFEQ $skip_dec_",&current_id," LF@fst_iter_",&previous_c," bool@false\n",NULL);
+
         DString_concat(&Output,"DEFVAR LF@fst_iter_",&current_id,"\n",NULL);
         DString_concat(&Output,"MOVE LF@fst_iter_",&current_id," bool@true\n",NULL);
         DString_concat(&Output,"LABEL $skip_dec_",&current_id,"\n",NULL);
@@ -256,8 +262,15 @@ void generate_break(char* hash){
 void generate_if(ASTNode* if_node){
 
     generate_expression(if_node->left);
+
     if(loop_count>0){
-        DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(if_node->parent)," LF@fst_iter_",&iter_id," bool@false\n",NULL);
+        ASTNode* parent_node = find_parent_code_block(if_node);
+        if(parent_node->parent->parent != NULL && parent_node->parent->parent->type == NODE_IF_STATEMENT){
+            DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(if_node->parent),NULL);
+            DString_concat(&Output," LF@fst_if_",get_CB_hash(parent_node)," bool@false\n",NULL);
+        }
+        else DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(if_node->parent)," LF@fst_iter_",&iter_id," bool@false\n",NULL);
+
         DString_concat(&Output,"DEFVAR LF@fst_if_",get_CB_hash(if_node->right->left),"\n",NULL);
         DString_concat(&Output,"DEFVAR LF@fst_if_",get_CB_hash(if_node->right->right),"\n",NULL);
         DString_concat(&Output,"MOVE LF@fst_if_",get_CB_hash(if_node->right->left)," bool@true\n",NULL);
