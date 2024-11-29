@@ -2,28 +2,33 @@
  * Project: Implementace překladače imperativního jazyka IFJ24.
  *
  * @file parser.c
- * @brief Constructs an AST from recieved tokens with respect
- *        to the grammar of the language ifj24.
+ * @brief Constructs an AST from received tokens in respect to
+ * the grammar of the language ifj24.
  *
  * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
+ * @author Matúš Mihaljevič <xmihalm00@stud.fit.vutbr.cz>
  */
 
-#include"error.h"
-#include"parser.h"
-#include"scanner.h"
+#include "error.h"
+#include "parser.h"
+#include "precedence_analysis.h"
+#include "scanner.h"
+#include "stack.h"
 
 Token current_token;
 ASTNode* root = NULL;
 
 void advance_token()
 {
-    if(get_token(&current_token)) error(SCANNER_ERROR_LEX);
+	int ret = get_token(&current_token);
+    if (ret != 0) {
+		error(ret);
+	}
 }
 
 int match(Type token_type)
 {
-    if(current_token.type == token_type)
-    {
+    if(current_token.type == token_type) {
         advance_token();
         return 1;
     }
@@ -32,54 +37,52 @@ int match(Type token_type)
 
 void error(int error_code)
 {
-    switch (error_code)
-    {
-    case PARSER_ERROR_SYNTAX:
-        printf("Found syntax error: %s Line: %d\n",current_token.lexeme, current_token.line);
-        exit(error_code);
-        break;
-    case SCANNER_ERROR_LEX:
-        printf("Found lexical error\n");
-        exit(error_code);
-        break;
-    default:
-        exit(error_code);
-        break;
+    switch (error_code) {
+		case PARSER_ERROR_SYNTAX:
+			print_error(PARSER_ERROR_SYNTAX, current_token.line, "Syntax error occured. Unexpected token.");
+			exit(error_code);
+			break;
+		case SCANNER_ERROR_LEX:
+			exit(error_code);
+			break;
+		default:
+			exit(error_code);
+			break;
     }
 }
 
-ASTNode* parse_null(ASTNode* parent){
+ASTNode* parse_null(ASTNode* parent) {
     ASTNode* null_node = new_ast_node(NODE_NULL,current_token.lexeme,parent);
     advance_token();
     return null_node;
 }
 
-ASTNode* parse_int32(ASTNode* parent){
+ASTNode* parse_int32(ASTNode* parent) {
     ASTNode* int32_node = new_ast_node(NODE_INT32,current_token.lexeme,parent);
     int32_node->variable.i32 = current_token.attribute.i32;
     advance_token();
     return int32_node;
 }
 
-ASTNode* parse_float64(ASTNode* parent){
+ASTNode* parse_float64(ASTNode* parent) {
     ASTNode* float64_node = new_ast_node(NODE_FLOAT64,current_token.lexeme,parent);
     float64_node->variable.f64 = current_token.attribute.f64;
     advance_token();
     return float64_node;
 }
 
-ASTNode* parse_u8(ASTNode* parent){
+ASTNode* parse_u8(ASTNode* parent) {
     ASTNode* u8_node = new_ast_node(NODE_U8,current_token.lexeme,parent);
     u8_node->variable.u8 = current_token.attribute.string;
     advance_token();
     return u8_node;
 }
 
-ASTNode* parse_id_op(ASTNode* parent){
+ASTNode* parse_id_op(ASTNode* parent) {
     ASTNode* current = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,parent);
     ASTNode* statement_name = NULL;
     advance_token();
-    if(match(TOKEN_TYPE_LEFT_BRACKET)){
+    if(match(TOKEN_TYPE_LEFT_BRACKET)) {
         statement_name = new_ast_node(NODE_FUNCTION_CALL,"fn_call" ,parent);
         statement_name->left = parse_arguments(statement_name);
         current->parent = statement_name;
@@ -89,14 +92,14 @@ ASTNode* parse_id_op(ASTNode* parent){
         return statement_name;
     }
 
-    if(match(TOKEN_TYPE_ASSIGN) && parent->type == NODE_STATEMENT){
+    if(match(TOKEN_TYPE_ASSIGN) && parent->type == NODE_STATEMENT) {
         statement_name = new_ast_node(NODE_ASSIGNMENT,"assignment" ,parent);
         current->left = parse_assignment(current->lexeme,current);
         statement_name->right = current;
         return statement_name;
     }
 
-    if(!strcmp(current->lexeme,"ifj") && match(TOKEN_TYPE_DOT)){
+    if(!strcmp(current->lexeme,"ifj") && match(TOKEN_TYPE_DOT)) {
         statement_name = new_ast_node(NODE_BUILT_IN_FUNCTION_CALL,"built_fn_call",parent);
         if(current_token.type != TOKEN_TYPE_INTERN) error(PARSER_ERROR_SYNTAX);
         statement_name->right = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,statement_name);
@@ -108,7 +111,7 @@ ASTNode* parse_id_op(ASTNode* parent){
         return statement_name;
     }
 
-    if(current_token.type == TOKEN_TYPE_INTERN && current_token.attribute.keyword == INTERN_AS){
+    if(current_token.type == TOKEN_TYPE_INTERN && current_token.attribute.keyword == INTERN_AS) {
         if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
         statement_name->left = parse_arguments(statement_name);
         if(!match(TOKEN_TYPE_RIGHT_BRACKET) && statement_name->left != NULL) error(PARSER_ERROR_SYNTAX);
@@ -117,38 +120,37 @@ ASTNode* parse_id_op(ASTNode* parent){
     return current;
 }
 
-ASTNode* parse_factor(ASTNode* parent){
-
-    if(current_token.type == TOKEN_TYPE_IDENTIFIER){
+ASTNode* parse_factor(ASTNode* parent) {
+    if(current_token.type == TOKEN_TYPE_IDENTIFIER) {
         return parse_id_op(parent);
     }
-    else if(current_token.type == TOKEN_TYPE_FLOAT){
+    else if(current_token.type == TOKEN_TYPE_FLOAT) {
         return parse_float64(parent);
     }
-    else if(current_token.type == TOKEN_TYPE_INT){
+    else if(current_token.type == TOKEN_TYPE_INT) {
         return parse_int32(parent);
     }
-    else if(current_token.type == TOKEN_TYPE_STRING){
+    else if(current_token.type == TOKEN_TYPE_STRING) {
         return parse_u8(parent);
     }
-    else if(current_token.attribute.keyword == KEYWORD_NULL){
+    else if(current_token.attribute.keyword == KEYWORD_NULL) {
         return parse_null(parent);
     }
-    else if(match(TOKEN_TYPE_LEFT_BRACKET)){
+    else if(match(TOKEN_TYPE_LEFT_BRACKET)) {
 
-        ASTNode* expr = parse_relation_expression(parent);
-        if(!match(TOKEN_TYPE_RIGHT_BRACKET)){
+        ASTNode* expr = precedence_analysis(parent);
+        if(!match(TOKEN_TYPE_RIGHT_BRACKET)) {
             error(PARSER_ERROR_SYNTAX);
         }
         return expr;
     }
-    else{
+    else {
         error(PARSER_ERROR_SYNTAX);
     }
     return NULL;
 }
 
-ASTNode* parse_term(ASTNode* parent){
+ASTNode* parse_term(ASTNode* parent) {
     ASTNode* left = parse_factor(parent);
     if (!left) return NULL;
 
@@ -166,7 +168,7 @@ ASTNode* parse_term(ASTNode* parent){
     return left;
 }
 
-ASTNode* parse_expression(ASTNode* parent){
+ASTNode* parse_expression(ASTNode* parent) {
     ASTNode* left = parse_term(parent);
     if (!left) return NULL;
 
@@ -184,7 +186,7 @@ ASTNode* parse_expression(ASTNode* parent){
     return left;
 }
 
-ASTNode* parse_relation_expression(ASTNode* parent){
+ASTNode* parse_relation_expression(ASTNode* parent) {
     ASTNode* left = parse_expression(parent);
     if(!left) return NULL;
 
@@ -231,20 +233,20 @@ ASTNode* parse_function_declaration(ASTNode* parent)
     return function_decl;
 }
 
-ASTNode* parse_return(ASTNode* parent){
+ASTNode* parse_return(ASTNode* parent) {
     advance_token();
     ASTNode* return_statement = new_ast_node(NODE_RETURN,"return",parent);
     if(current_token.type == TOKEN_TYPE_SEMICOLON) return return_statement;
-    return_statement->left = parse_relation_expression(return_statement);
+    return_statement->left = precedence_analysis(return_statement);
     return return_statement;
 }
 
-ASTNode* parse_arguments(ASTNode* parent){
+ASTNode* parse_arguments(ASTNode* parent) {
     ASTNode* current_argument = new_ast_node(NODE_ARGUMENT,"argument",parent);
     ASTNode* last_argument = NULL;
     ASTNode* return_arguments = NULL;
     if(current_token.type == TOKEN_TYPE_RIGHT_BRACKET) return NULL;
-    current_argument->left = parse_relation_expression(current_argument);
+    current_argument->left = precedence_analysis(current_argument);
     return_arguments = current_argument;
     while (current_token.type == TOKEN_TYPE_COMMA)
     {
@@ -252,14 +254,14 @@ ASTNode* parse_arguments(ASTNode* parent){
         if(current_token.type == TOKEN_TYPE_RIGHT_BRACKET) break;
         last_argument = current_argument;
         current_argument = new_ast_node(NODE_ARGUMENT,"argument",last_argument);
-        current_argument->left = parse_relation_expression(current_argument);
+        current_argument->left = precedence_analysis(current_argument);
         last_argument->right = current_argument;
     }
 
     return return_arguments;
 }
 
-ASTNode* parse_parameters(ASTNode* parent){
+ASTNode* parse_parameters(ASTNode* parent) {
     ASTNode* return_param = NULL;
     ASTNode* current_param = NULL;
     ASTNode* last_param = NULL;
@@ -313,7 +315,7 @@ ASTNode* parse_declaration(NodeType type, ASTNode* parent)
 
     if(!match(TOKEN_TYPE_IDENTIFIER))error(PARSER_ERROR_SYNTAX);
 
-    if(match(TOKEN_TYPE_COLON)){
+    if(match(TOKEN_TYPE_COLON)) {
         data_type = parse_data_type(decl);
         decl->left = data_type;
     }
@@ -322,38 +324,42 @@ ASTNode* parse_declaration(NodeType type, ASTNode* parent)
 
     if(!match(TOKEN_TYPE_ASSIGN))error(PARSER_ERROR_SYNTAX);
 
-    if(!strcmp(identifier->lexeme,"ifj") && current_token.type == TOKEN_TYPE_KEYWORD &&
-	   current_token.attribute.keyword == KEYWORD_IMPORT && type == NODE_CONST_DECLARATION) {
-        ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"Assignment",identifier);
-        assignment->right = parse_prolog(assignment);
-        assignment->left = new_ast_node(NODE_IDENTIFIER,identifier->lexeme,assignment);
-        identifier->right = assignment;
-        return decl;
+    if(current_token.type == TOKEN_TYPE_KEYWORD &&
+	   current_token.attribute.keyword == KEYWORD_IMPORT &&
+	   type == NODE_CONST_DECLARATION) {
+		if (!strcmp(identifier->lexeme,"ifj")) {
+			ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"Assignment",identifier);
+			assignment->right = parse_prolog(assignment);
+			assignment->left = new_ast_node(NODE_IDENTIFIER,identifier->lexeme,assignment);
+			identifier->right = assignment;
+			return decl;
+		} else {
+			error(PARSER_ERROR_SYNTAX);
+		}
     }
-
 
     identifier->right = parse_assignment(identifier->lexeme,identifier);
     return decl;
 }
 
-ASTNode* parse_assignment(char* id_lexeme, ASTNode* parent){
+ASTNode* parse_assignment(char* id_lexeme, ASTNode* parent) {
     ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"=",parent);
-    ASTNode* expr = parse_relation_expression(assignment);
+    ASTNode* expr = precedence_analysis(assignment);
     if(!expr) return NULL;
     assignment->left = new_ast_node(NODE_IDENTIFIER,id_lexeme,assignment);
     assignment->right = expr;
     return assignment;
 }
 
-ASTNode* parse_if(ASTNode* parent){
+ASTNode* parse_if(ASTNode* parent) {
     advance_token();
     if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
     ASTNode* statement_name = new_ast_node(NODE_IF_STATEMENT,"if_statement",parent);
-    statement_name->left = parse_relation_expression(statement_name);
+    statement_name->left = precedence_analysis(statement_name);
     if(!match(TOKEN_TYPE_RIGHT_BRACKET)) error(PARSER_ERROR_SYNTAX);
     statement_name->right = new_ast_node(NODE_EMPTY,"empty",statement_name);
 
-    if(match(TOKEN_TYPE_PIPE)){
+    if(match(TOKEN_TYPE_PIPE)) {
         statement_name->right = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,statement_name);
         if(!match(TOKEN_TYPE_IDENTIFIER)) error(PARSER_ERROR_SYNTAX);
         if(!match(TOKEN_TYPE_PIPE)) error(PARSER_ERROR_SYNTAX);
@@ -373,9 +379,9 @@ ASTNode* parse_if(ASTNode* parent){
     return statement_name;
 }
 
-ASTNode* parse_loop(ASTNode* parent){
+ASTNode* parse_loop(ASTNode* parent) {
     char* loop_lexeme; NodeType loop_node;
-    if(current_token.attribute.keyword == KEYWORD_FOR){
+    if(current_token.attribute.keyword == KEYWORD_FOR) {
         loop_lexeme = "for_statement"; loop_node = NODE_FOR_STATEMENT;
     } else {
         loop_lexeme = "while_statement"; loop_node = NODE_WHILE_STATEMENT;
@@ -384,19 +390,19 @@ ASTNode* parse_loop(ASTNode* parent){
     advance_token();
     if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
     ASTNode* statement_name = new_ast_node(loop_node,loop_lexeme,parent);
-    statement_name->left = parse_relation_expression(statement_name);
+    statement_name->left = precedence_analysis(statement_name);
     if(!match(TOKEN_TYPE_RIGHT_BRACKET)) error(PARSER_ERROR_SYNTAX);
 
-    if(loop_node == NODE_WHILE_STATEMENT){
+    if(loop_node == NODE_WHILE_STATEMENT) {
         statement_name->right = new_ast_node(NODE_EMPTY,"empty",statement_name);
-        if(match(TOKEN_TYPE_PIPE)){
+        if(match(TOKEN_TYPE_PIPE)) {
             statement_name->right = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,statement_name);
             if(!match(TOKEN_TYPE_IDENTIFIER)) error(PARSER_ERROR_SYNTAX);
             if(!match(TOKEN_TYPE_PIPE)) error(PARSER_ERROR_SYNTAX);
         }
     }
     else{
-        if(match(TOKEN_TYPE_PIPE)){
+        if(match(TOKEN_TYPE_PIPE)) {
             statement_name->right = new_ast_node(NODE_IDENTIFIER,current_token.lexeme,statement_name);
             if(!match(TOKEN_TYPE_IDENTIFIER)) error(PARSER_ERROR_SYNTAX);
             if(!match(TOKEN_TYPE_PIPE)) error(PARSER_ERROR_SYNTAX);
@@ -417,7 +423,7 @@ ASTNode* parse_iteration_statement(ASTNode* parent){
     else return new_ast_node(NODE_BREAK_STATEMENT,"break",parent);
 }
 
-ASTNode* parse_prolog(ASTNode* parent){
+ASTNode* parse_prolog(ASTNode* parent) {
     advance_token();
     if(!match(TOKEN_TYPE_LEFT_BRACKET)) error(PARSER_ERROR_SYNTAX);
     if(strcmp(current_token.attribute.string,"ifj24.zig")) error(PARSER_ERROR_SYNTAX);

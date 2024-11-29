@@ -45,6 +45,20 @@
     return stack->top == -1;                                                   \
   }
 
-STACKDEF(int, symbol)
+STACKDEF(GrammarSymbol *, symbol)
 STACKDEF(ASTNode *, AST)
 STACKDEF(TypeProperties *, property)
+
+GrammarSymbol* stack_symbol_top_terminal(stack_symbol_t *stack) {
+	if (stack->top == -1) {
+      return NULL;
+    }
+
+	STACK_FOREACH(*stack, i) {
+		if (!stack->items[i]->non_term) {
+			return stack->items[i];
+		}
+	}
+
+	return NULL;
+}
