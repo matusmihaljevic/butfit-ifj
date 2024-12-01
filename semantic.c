@@ -17,8 +17,8 @@ void semantic_check_prologue(ASTNode* first_statement) {
     ASTNode* node = first_statement->right;
     while (node->type != NODE_PROLOG) {
         if (node->right == NULL) {
-            print_error(SEMANTIC_ERROR_UNDEFINED, 0, "Prologue not found");
-            exit(SEMANTIC_ERROR_UNDEFINED);
+            print_error(PARSER_ERROR_SYNTAX, 0, "Prologue not found");
+            exit(PARSER_ERROR_SYNTAX);
         }
         node = node->right;
     }
@@ -170,8 +170,8 @@ TypeProperties* compute_binary_op_type(ASTNode* binary_op_node, bool condition) 
     result->retype = false;
     result->mutable = op1->mutable || op2->mutable;
     bool error = false;
-    if (op1->varType == VOID || op2->varType == VOID || op1->varType == U8 ||
-        op2->varType == U8 || op1->varType == NULL_C || op2->varType == NULL_C) {
+    if (op1->varType == VOID || op2->varType == VOID || op1->varType == U8 || op2->varType == U8
+	|| (op1->varType == NULL_C && !condition) || (op2->varType == NULL_C && !condition)) {
         error = true;
     } else if (op1->varType == op2->varType) {
         if(!strcmp(binary_op_node->lexeme, "/") && (op1->varType == INT)) binary_op_node->lexeme = "//";
@@ -458,7 +458,9 @@ void check_if_statement(ASTNode* if_statement) {
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
 		}
 		if_statement->right->code_block = if_statement;
-        insert_RBNode(symtable, if_statement->right->lexeme, CONST, exp_type->varType, false, false, if_statement);
+		if (find_RBNode(symtable->root, if_statement->right->lexeme) == NULL) {
+        	insert_RBNode(symtable, if_statement->right->lexeme, CONST, exp_type->varType, false, false, if_statement);
+		}
     } else {
 		check_condition(if_statement->left);
 	}
@@ -478,7 +480,9 @@ void check_while_statement(ASTNode* while_statement) {
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
 		}
 		while_statement->right->code_block = while_statement;
-        insert_RBNode(symtable, while_statement->right->lexeme, CONST, exp_type->varType, false, false, while_statement);
+		if (find_RBNode(symtable->root, while_statement->right->lexeme) == NULL) {
+        	insert_RBNode(symtable, while_statement->right->lexeme, CONST, exp_type->varType, false, false, while_statement);
+		}
     } else {
 		check_condition(while_statement->left);
 	}
@@ -519,7 +523,8 @@ void check_return(ASTNode* return_node) {
 			exit(SEMANTIC_ERROR_RETURN_EXPR);
 		}
 	}
-	parent_fn->data->return_found = true;
+	ASTNode* code_block = find_parent_code_block(return_node);
+	code_block->code_block = return_node;
 }
 
 void semantic_check_statement(ASTNode* statement) {
@@ -579,6 +584,23 @@ void declare_params(ASTNode* param) {
     }
 }
 
+bool check_missing_return(ASTNode* code_block) {
+	if (code_block->code_block != NULL) {
+		return true;
+	}
+	ASTNode* statement = code_block->left;
+	while (statement != NULL) {
+		if (statement->right->type == NODE_IF_STATEMENT) {
+			if (check_missing_return(statement->right->right->left) &&
+			check_missing_return(statement->right->right->right)) {
+				return true;
+			}
+		}
+		statement = statement->left;
+	}
+	return false;
+}
+
 void semantic_check_functions(ASTNode* main_code_block) {
     ASTNode* current_function = main_code_block->left->left;
     while (current_function != NULL) {
@@ -589,6 +611,7 @@ void semantic_check_functions(ASTNode* main_code_block) {
         semantic_check_body_block(current_function->right->right->right);
         remove_RBNodes_by_code_block(current_function->right->right);
 		RBNode* fn = find_RBNode(symtable->root, current_function->right->right->lexeme);
+		fn->data->return_found = check_missing_return(current_function->right->right->right);
 		if (!fn->data->return_found && fn->data->varType != VOID) {
 			print_error(SEMANTIC_ERROR_RETURN_EXPR, 0, "Function without return");
 			exit(SEMANTIC_ERROR_RETURN_EXPR);
