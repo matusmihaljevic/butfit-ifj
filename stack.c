@@ -10,6 +10,7 @@
 
 #include "stack.h"
 #include "error.h"
+#include "parser.h"
 
 /*
  * Makro generující implementaci funkcí pracujících se zásobníky.
@@ -20,7 +21,7 @@
                                                                                \
   void stack_##TNAME##_push(stack_##TNAME##_t *stack, T item) {                \
     if (stack->top == MAXSTACK - 1) {                                          \
-      print_error(COMPILER_ERROR_INTERNAL, 0, "Stack overflow!");              \
+      error(PARSER_ERROR_SYNTAX);              								   \
     } else {                                                                   \
       stack->items[++stack->top] = item;                                       \
     }                                                                          \

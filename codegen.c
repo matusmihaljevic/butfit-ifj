@@ -282,10 +282,10 @@ void generate_if(ASTNode* if_node){
         DString_concat(&Output,"PUSHS bool@true\nJUMPIFNEQS $else_",get_CB_hash(if_node),"\n",NULL);
     }
     else{
+        generate_var_decl(if_node);
         DString_concat(&Output,"POPS GF@GF_RESULT\nTYPE GF@GF_RESULT GF@GF_RESULT\n",NULL);
         DString_concat(&Output,"JUMPIFEQ $else_",get_CB_hash(if_node)," GF@GF_RESULT string@nil\n",NULL);
 
-        generate_var_decl(if_node);
         generate_expression(if_node->left);
         DString_concat(&Output,"POPS LF@",if_node->right->lexeme,"_",get_CB_hash(if_node->right->code_block),"\n",NULL);
     }

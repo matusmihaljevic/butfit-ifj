@@ -64,7 +64,7 @@ typedef enum {
  */
 typedef union {
     int i32;         /**< 32-bit integer. */
-    float f64;       /**< 64-bit floating-point number. */
+    double f64;       /**< 64-bit floating-point number. */
     char* u8;        /**< 8-bit unsigned character string (commonly used for string literals). */
 } Variable;
 
