@@ -82,9 +82,17 @@
                                         "LABEL $end_substr_",get_CB_hash(built_in_fn_node),"\n",             \
                                         NULL);
 
-#define INTERN_FN_ORD   DString_concat(&Output,"POPS GF@GF_OPERAND1\nPOPS GF@GF_RESULT\n",        \
+#define INTERN_FN_ORD DString_concat(&Output,"POPS GF@GF_OPERAND1\nPOPS GF@GF_RESULT\n",        \
+									   "LT GF@GF_OPERAND2 GF@GF_OPERAND1 int@0\n"				  \
+									   "JUMPIFEQ $ord_null_",get_CB_hash(built_in_fn_node)," GF@GF_OPERAND2 bool@true\n"	\
+									   "STRLEN GF@GF_OPERAND2 GF@GF_RESULT\n"			\
+									   "SUB GF@GF_OPERAND2 GF@GF_OPERAND2 int@1\n"			\
+									   "GT GF@GF_OPERAND2 GF@GF_OPERAND1 GF@GF_OPERAND2\n"		\
+									   "JUMPIFEQ $ord_null_",get_CB_hash(built_in_fn_node)," GF@GF_OPERAND2 bool@true\n"	\
                                        "STRI2INT GF@GF_RESULT GF@GF_RESULT GF@GF_OPERAND1\n",     \
-                                       "PUSHS GF@GF_RESULT\n",NULL);
+                                       "PUSHS GF@GF_RESULT\nJUMP $ord_end_",get_CB_hash(built_in_fn_node),"\n",	\
+									   "LABEL $ord_null_",get_CB_hash(built_in_fn_node),"\n"	\
+									   "PUSHS int@0\nLABEL $ord_end_",get_CB_hash(built_in_fn_node),"\n",NULL);
 
 #define INTERN_FN_CHR   DString_concat(&Output,"INT2CHARS\n",NULL);
 #define INTERN_FN_I2F   DString_concat(&Output,"INT2FLOATS\n",NULL);
