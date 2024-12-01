@@ -50,7 +50,6 @@ int get_type(ASTNode* type_node) {
 void check_unused_identifiers(RBNode* node, ASTNode* ptr) {
 	if (node != symtable->NIL) {
         if (node->data->nodeType != FN && node->data->ptr == ptr && node->data->changed == false) {
-			//printf("Unused identifier: %s\n", node->name.data);
 			print_error(SEMANTIC_ERROR_UNUSED_VAR, 0, "Unused identifier");
 			exit(SEMANTIC_ERROR_UNUSED_VAR);
 		}
@@ -60,14 +59,11 @@ void check_unused_identifiers(RBNode* node, ASTNode* ptr) {
 }
 
 RBNode* find_RBNode_by_code_block(RBNode* root, ASTNode* ptr) {
-	// Ak je strom prázdny alebo ak sme našli uzol s hľadaným ptr
     if (root == NULL || root->data->ptr == ptr)
         return root;
-	// Prehľadávame ľavý podstrom
     RBNode* found = find_RBNode_by_code_block(root->left, ptr);
-    if (found != NULL) // Ak sme uzol našli, vrátime ho
+    if (found != NULL)
         return found;
-    // Prehľadávame pravý podstrom
     return find_RBNode_by_code_block(root->right, ptr);
 }
 
@@ -75,7 +71,6 @@ void remove_RBNodes_by_code_block(ASTNode* ptr) {
 	check_unused_identifiers(symtable->root, ptr);
 	RBNode* node_to_delete = find_RBNode_by_code_block(symtable->root, ptr);
 	while (node_to_delete != NULL) {
-		//printf("			DELETING NODE: %s\n", node_to_delete->name.data);
 		delete_RBNode(symtable, node_to_delete);
 		node_to_delete = find_RBNode_by_code_block(symtable->root, ptr);
 	}
@@ -449,7 +444,6 @@ void check_condition(ASTNode* expression) {
 }
 
 void check_if_statement(ASTNode* if_statement) {
-    //printf("            IF STATEMENT: %s\n", if_statement->lexeme);
     compute_expression_type(if_statement->left, true);
     TypeProperties* exp_type = stack_property_pop(&type_properties);
     if (if_statement->right->type == NODE_IDENTIFIER) {
@@ -471,7 +465,6 @@ void check_if_statement(ASTNode* if_statement) {
 }
 
 void check_while_statement(ASTNode* while_statement) {
-    //printf("            WHILE STATEMENT: %s\n", while_statement->lexeme);
     compute_expression_type(while_statement->left, true);
     TypeProperties* exp_type = stack_property_pop(&type_properties);
 	if (while_statement->right->type == NODE_IDENTIFIER) {
@@ -560,9 +553,7 @@ void semantic_check_statement(ASTNode* statement) {
 
 void semantic_check_body_block(ASTNode* fn_code_block) {
     ASTNode* statement = fn_code_block->left;
-    //printf("  CODE BLOCK\n");
     while (statement != NULL) {
-        //printf("    STATEMENT: %s\n", statement->right->lexeme);
         semantic_check_statement(statement);
         statement = statement->left;
     }
@@ -604,7 +595,6 @@ bool check_missing_return(ASTNode* code_block) {
 void semantic_check_functions(ASTNode* main_code_block) {
     ASTNode* current_function = main_code_block->left->left;
     while (current_function != NULL) {
-        //printf("FUNCTION: %s\n", current_function->right->right->lexeme);
         if (current_function->right->left != NULL) {
             declare_params(current_function->right->left);
         }
