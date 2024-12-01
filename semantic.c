@@ -584,6 +584,10 @@ void declare_params(ASTNode* param) {
     ASTNode* parent_fn = param->parent->right;
     bool param_nullable;
     while (param != NULL) {
+		if (!strcmp(param->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in parameter declaration");
+			exit(PARSER_ERROR_SYNTAX);
+		}
 		param->code_block = parent_fn;
         if (find_RBNode(symtable->root, param->lexeme) != NULL) {
             print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Parameter redefinition");
