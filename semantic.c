@@ -276,6 +276,10 @@ void compute_expression_type(ASTNode* expression_root, bool condition) {
     }
     switch (expression_root->type) {
     case NODE_IDENTIFIER:
+		if (!strcmp(expression_root->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in expression");
+			exit(PARSER_ERROR_SYNTAX);
+		}
         check_identifier(expression_root);
         stack_property_push(&type_properties, compute_identifier_type(expression_root));
         break;
@@ -322,6 +326,10 @@ void semantic_check_main() {
 void semantic_check_global_code_block(ASTNode* main_code_block){
     ASTNode* statement_node = main_code_block->left->left;
     while (statement_node != NULL) {
+		if (!strcmp(statement_node->right->right->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in function name");
+			exit(PARSER_ERROR_SYNTAX);
+		}
         if (statement_node->right->type != NODE_FUNCTION_DECLARATION) {
             print_error(SEMANTIC_ERROR_OTHER, 0, "Global code block contains non-function declaration");
             exit(SEMANTIC_ERROR_OTHER);
@@ -387,6 +395,10 @@ void check_assignment(ASTNode* assignment) {
 }
 
 void check_declaration(ASTNode* decl_node) {
+	if (!strcmp(decl_node->right->lexeme, "_")){
+		print_error(PARSER_ERROR_SYNTAX, 0, "Discard in declaration");
+		exit(PARSER_ERROR_SYNTAX);
+	}
     if (find_RBNode(symtable->root, decl_node->right->lexeme) != NULL) {
         print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Variable or constant redefinition");
         exit(SEMANTIC_ERROR_REDEFINITION);
@@ -447,6 +459,10 @@ void check_if_statement(ASTNode* if_statement) {
     compute_expression_type(if_statement->left, true);
     TypeProperties* exp_type = stack_property_pop(&type_properties);
     if (if_statement->right->type == NODE_IDENTIFIER) {
+		if (!strcmp(if_statement->right->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in if statement declaration");
+			exit(PARSER_ERROR_SYNTAX);
+		}
 		if (!exp_type->nullable) {
 			print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Non-nullable condition in if statement");
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
@@ -468,6 +484,10 @@ void check_while_statement(ASTNode* while_statement) {
     compute_expression_type(while_statement->left, true);
     TypeProperties* exp_type = stack_property_pop(&type_properties);
 	if (while_statement->right->type == NODE_IDENTIFIER) {
+		if (!strcmp(while_statement->right->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in while statement declaration");
+			exit(PARSER_ERROR_SYNTAX);
+		}
 		if (!exp_type->nullable) {
 			print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Non-nullable condition in while statement");
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
