@@ -504,6 +504,32 @@ void check_while_statement(ASTNode* while_statement) {
 	remove_RBNodes_by_code_block(while_statement);
 }
 
+void check_continue_break(ASTNode* statement) {
+	while (statement != NULL) {
+		if (statement->type == NODE_FOR_STATEMENT) {
+			return;
+		}
+		statement = statement->parent;
+	}
+	print_error(SEMANTIC_ERROR_OTHER, 0, "Continue or break not in loop");
+	exit(SEMANTIC_ERROR_OTHER);
+}
+
+void check_for_statement(ASTNode* for_statement) {
+	compute_expression_type(for_statement->left, false);
+	TypeProperties* exp_type = stack_property_pop(&type_properties);
+	if (exp_type->varType != U8) {
+		print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Non string in for statement");
+		exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+	}
+	if (find_RBNode(symtable->root, for_statement->right->lexeme) == NULL && !strcmp(for_statement->right->lexeme, "_")) {
+		insert_RBNode(symtable, for_statement->right->lexeme, CONST, INT, false, false, for_statement);
+	}
+	semantic_check_body_block(for_statement->right->left);
+	remove_RBNodes_by_code_block(for_statement);
+	free(exp_type);
+}
+
 RBNode* find_parent_function(ASTNode* node) {
     while (node->type != NODE_FUNCTION_DECLARATION) {
         node = node->parent;
@@ -562,6 +588,13 @@ void semantic_check_statement(ASTNode* statement) {
         break;
     case NODE_WHILE_STATEMENT:
         check_while_statement(statement->right);
+		break;
+	case NODE_FOR_STATEMENT:
+		check_for_statement(statement->right);
+		break;
+	case NODE_BREAK_STATEMENT:
+	case NODE_CONTINUE_STATEMENT:
+		check_continue_break(statement);
 		break;
 	case NODE_RETURN:
         check_return(statement->right);

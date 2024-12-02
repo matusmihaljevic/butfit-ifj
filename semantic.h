@@ -196,6 +196,20 @@ void check_if_statement(ASTNode* if_statement);
 void check_while_statement(ASTNode* while_statement);
 
 /**
+ * @brief Checks whether continue or break is in for statement.
+ *
+ * @param statement Continue or break statement node.
+ */
+void check_continue_break(ASTNode* statement);
+
+/**
+ * @brief Checks for statement.
+ *
+ * @param for_statement For statement node.
+ */
+void check_for_statement(ASTNode* for_statement);
+
+/**
  * @brief Finds parent function of the node.
  *
  * @param node Node to find parent function of.
