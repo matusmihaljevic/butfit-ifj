@@ -76,4 +76,4 @@ int get_token(Token *token);
  */
 void set_source_file(FILE *f);
 
-#endifSCANNER_H
+#endif //SCANNER_H
