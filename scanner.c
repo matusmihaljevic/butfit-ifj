@@ -471,33 +471,34 @@ int get_token(Token *token) {
 				token_complete = true;
 				break;
 			case STATE_STRING_ESCAPE:
+			case STATE_MULTILINE_ESCAPE:
 				switch (c) {
 					case '\\':
-						state = STATE_STRING_START;
+						state -= 2;
 						DString_append(&string, '\\');
 						break;
 					case '\"':
-						state = STATE_STRING_START;
+						state -= 2;
 						DString_append(&string, '\"');
 						break;
 					case '\'':
-						state = STATE_STRING_START;
+						state -= 2;
 						DString_append(&string, '\'');
 						break;
 					case 'n':
-						state = STATE_STRING_START;
+						state -= 2;
 						DString_append(&string, '\n');
 						break;
 					case 'r':
-						state = STATE_STRING_START;
+						state -= 2;
 						DString_append(&string, '\r');
 						break;
 					case 't':
-						state = STATE_STRING_START;
+						state -= 2;
 						DString_append(&string, '\t');
 						break;
 					case 'x':
-						state = STATE_STRING_HEXA;
+						state++;
 						break;
 					default:
 						print_error(SCANNER_ERROR_LEX, line, "Uknown escape sequence.");
@@ -506,6 +507,7 @@ int get_token(Token *token) {
 				}
 				break;
 			case STATE_STRING_HEXA:
+			case STATE_MULTILINE_HEXA:
 				if (isxdigit(c)) {
 					hex[hex_count++] = c;
 					if (hex_count == 2) {
@@ -519,7 +521,7 @@ int get_token(Token *token) {
 						}
 						DString_append(&string, (char)hex_value);
 
-						state = STATE_STRING_START;
+						state -= 3;
 					}
 				} else {
 					print_error(SCANNER_ERROR_LEX, line, "Invalid hexadecimal escape sequence.");
@@ -531,8 +533,11 @@ int get_token(Token *token) {
 				if(c == '.') {
 					DString_append(&string, c);
 					state = STATE_FLOAT_0;
+				} else if (c == 'e' || c == 'E') {
+					DString_append(&string, c);
+					state = STATE_FLOAT_E_0;
 				} else if (isdigit(c)) {
-					print_error(SCANNER_ERROR_LEX, line, "Expected a decimal point after '0' character.");
+					print_error(SCANNER_ERROR_LEX, line, "Expected a decimal point or 'e' after '0' character.");
 					DString_free(&string);
 					return SCANNER_ERROR_LEX;
 				} else {
@@ -657,7 +662,14 @@ int get_token(Token *token) {
 				if(c == '\n') {
 					state = STATE_MULTILINE_STRING_1;
 					line++;
-				} else
+				} else if (c < ASCII_CONTROL_CHARS_VALUE) {
+					print_error(SCANNER_ERROR_LEX, line, "Unsupported character.");
+					DString_free(&string);
+					return SCANNER_ERROR_LEX;
+
+				} else if (c == '\\')
+					state = STATE_MULTILINE_ESCAPE;
+				else
 					DString_append(&string, c);
 				break;
 			case STATE_MULTILINE_STRING_1:
