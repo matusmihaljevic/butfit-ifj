@@ -467,17 +467,18 @@ void check_if_statement(ASTNode* if_statement) {
 			print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Non-nullable condition in if statement");
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
 		}
-		if_statement->right->code_block = if_statement;
-		if (find_RBNode(symtable->root, if_statement->right->lexeme) == NULL) {
-        	insert_RBNode(symtable, if_statement->right->lexeme, CONST, exp_type->varType, false, false, if_statement);
+		if_statement->right->code_block = if_statement->right->left;
+		if (find_RBNode(symtable->root, if_statement->right->lexeme) != NULL){
+			print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Non-nullable id redefinition in positive if branch");
+			exit(SEMANTIC_ERROR_REDEFINITION);
 		}
+        insert_RBNode(symtable, if_statement->right->lexeme, CONST, exp_type->varType, false, false, if_statement->right->left);
     } else {
 		check_condition(if_statement->left);
 	}
     free(exp_type);
     semantic_check_body_block(if_statement->right->left);
     semantic_check_body_block(if_statement->right->right);
-    remove_RBNodes_by_code_block(if_statement);
 }
 
 void check_while_statement(ASTNode* while_statement) {
@@ -493,9 +494,11 @@ void check_while_statement(ASTNode* while_statement) {
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
 		}
 		while_statement->right->code_block = while_statement;
-		if (find_RBNode(symtable->root, while_statement->right->lexeme) == NULL) {
-        	insert_RBNode(symtable, while_statement->right->lexeme, CONST, exp_type->varType, false, false, while_statement);
+		if (find_RBNode(symtable->root, while_statement->right->lexeme) != NULL) {
+			print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Non-nullable id redefinition");
+			exit(SEMANTIC_ERROR_REDEFINITION);
 		}
+        insert_RBNode(symtable, while_statement->right->lexeme, CONST, exp_type->varType, false, false, while_statement);
     } else {
 		check_condition(while_statement->left);
 	}
