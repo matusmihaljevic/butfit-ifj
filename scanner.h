@@ -36,7 +36,6 @@ typedef enum
     STATE_SEMICOLON,
     STATE_DOT,
     STATE_OPTIONAL,
-    STATE_EOL,
     STATE_EOF,
     STATE_LESS_THAN,
     STATE_GREATER_THAN,
@@ -59,6 +58,8 @@ typedef enum
 	STATE_STRING_HEXA,
     STATE_MULTILINE_STRING_0,
     STATE_MULTILINE_STRING_1,
+	STATE_MULTILINE_ESCAPE,
+	STATE_MULTILINE_HEXA,
     STATE_MULTILINE_STRING_2,
     STATE_IDENTIFIER,
     STATE_KEYWORD,
@@ -75,4 +76,4 @@ int get_token(Token *token);
  */
 void set_source_file(FILE *f);
 
-#endif //SCANNER_H
+#endifSCANNER_H
