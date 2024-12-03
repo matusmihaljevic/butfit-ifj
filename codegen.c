@@ -77,7 +77,8 @@ void generate_var_decl(ASTNode* decl_node){
 		}
 		else DString_concat(&Output,"JUMPIFEQ $skip_dec_",get_CB_hash(decl_node)," LF@fst_iter_",&iter_id," bool@false\n",NULL);
 	}
-	if(decl_node->type == NODE_IF_STATEMENT || decl_node->type == NODE_WHILE_STATEMENT)DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->right->code_block),"\n",NULL);
+	if(decl_node->type == NODE_IF_STATEMENT || decl_node->type == NODE_WHILE_STATEMENT)
+	DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->right->code_block),"\n",NULL);
 	else DString_concat(&Output,"DEFVAR LF@",decl_node->right->lexeme,"_",get_CB_hash(decl_node->code_block),"\n",NULL);
 	if(loop_count > 0)	DString_concat(&Output,"LABEL $skip_dec_",get_CB_hash(decl_node),"\n",NULL);
 	if(decl_node->right->right != NULL && decl_node->right->right->type == NODE_ASSIGNMENT)	generate_assignment(decl_node->right->right,true);
@@ -109,7 +110,9 @@ void generate_expression(ASTNode* expression_root_node){
     generate_expression(expression_root_node->right);
 
     if(expression_root_node->type == NODE_IDENTIFIER){
+
         DString_concat(&Output,"PUSHS LF@",expression_root_node->lexeme,"_",get_CB_hash(expression_root_node->code_block),"\n",NULL);
+		//printf("|LEX: %s| BLOK: %s|\n",expression_root_node->lexeme,get_CB_hash(expression_root_node->code_block));
     }
     else if(expression_root_node->type == NODE_BINARY_OP){
         generate_binary_op(expression_root_node);
@@ -283,11 +286,9 @@ void generate_if(ASTNode* if_node){
     }
     else{
         generate_var_decl(if_node);
-        DString_concat(&Output,"POPS GF@GF_RESULT\nTYPE GF@GF_RESULT GF@GF_RESULT\n",NULL);
+        DString_concat(&Output,"POPS LF@",if_node->right->lexeme,"_",get_CB_hash(if_node->right->left),"\n",NULL);
+        DString_concat(&Output,"TYPE GF@GF_RESULT LF@",if_node->right->lexeme,"_",get_CB_hash(if_node->right->left),"\n",NULL);
         DString_concat(&Output,"JUMPIFEQ $else_",get_CB_hash(if_node)," GF@GF_RESULT string@nil\n",NULL);
-
-        generate_expression(if_node->left);
-        DString_concat(&Output,"POPS LF@",if_node->right->lexeme,"_",get_CB_hash(if_node->right->code_block),"\n",NULL);
     }
     generate_code_block(if_node->right->left);
 	if(loop_count > 0) DString_concat(&Output,"MOVE LF@fst_if_",get_CB_hash(if_node->right->left)," bool@false\n",NULL);
