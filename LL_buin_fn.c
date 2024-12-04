@@ -1,16 +1,12 @@
 /**
  * Project: Implementation of the IFJ24 imperative language compiler.
  *
- *
  * @file LL_buin_fc.c
- * @brief Linked list which holds built in functions
- *
  * @brief Linked list which holds built in functions
  *
  * This file creates data into a LL of built in functions
  *
- *
- * @author Jaroslav Podmajerský
+ * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
 #include "LL_buin_fn.h"

@@ -21,7 +21,11 @@
 extern Token current_token;  ///< The token currently being parsed.
 extern ASTNode* root;        ///< The root node of the AST.
 
-void print_ast(ASTNode* node, int depth, bool is_left,bool color);
+/**
+ * @brief Prints an error code, and exits with the given error_code.
+ *
+ * @param error_code program exits with this error_code
+ */
 
 void error(int error_code);
 

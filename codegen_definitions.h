@@ -6,7 +6,7 @@
  *
  * This file provides all definitions used in codegen.c
  *
- * @author Jaroslav Podmajerský
+ * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
 #define PROLOGUE   DString_concat(&Output,      \

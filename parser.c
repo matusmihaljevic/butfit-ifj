@@ -37,18 +37,8 @@ int match(Type token_type)
 
 void error(int error_code)
 {
-    switch (error_code) {
-		case PARSER_ERROR_SYNTAX:
-			print_error(PARSER_ERROR_SYNTAX, current_token.line, "Syntax error occured. Unexpected token.");
-			exit(error_code);
-			break;
-		case SCANNER_ERROR_LEX:
-			exit(error_code);
-			break;
-		default:
-			exit(error_code);
-			break;
-    }
+	print_error(error_code,current_token.line,"Syntax error occured. Unexpected token");
+	exit(error_code);
 }
 
 ASTNode* parse_null(ASTNode* parent) {
@@ -117,6 +107,7 @@ ASTNode* parse_id_op(ASTNode* parent) {
         if(!match(TOKEN_TYPE_RIGHT_BRACKET) && statement_name->left != NULL) error(PARSER_ERROR_SYNTAX);
     }
 
+	if(statement_name == NULL && current->parent->type == NODE_STATEMENT) error(PARSER_ERROR_SYNTAX);
     return current;
 }
 
@@ -148,63 +139,6 @@ ASTNode* parse_factor(ASTNode* parent) {
         error(PARSER_ERROR_SYNTAX);
     }
     return NULL;
-}
-
-ASTNode* parse_term(ASTNode* parent) {
-    ASTNode* left = parse_factor(parent);
-    if (!left) return NULL;
-
-    while (current_token.type == TOKEN_TYPE_MUL || current_token.type == TOKEN_TYPE_DIV) {
-        char* op = current_token.lexeme;
-        advance_token();
-        ASTNode* right = parse_factor(parent);
-        if (!right) return NULL;
-
-        ASTNode* binary_op_node = create_binary_op_node(left, op, right, parent);
-        left->parent = binary_op_node;
-        right->parent = binary_op_node;
-        left = binary_op_node;
-    }
-    return left;
-}
-
-ASTNode* parse_expression(ASTNode* parent) {
-    ASTNode* left = parse_term(parent);
-    if (!left) return NULL;
-
-    while (current_token.type == TOKEN_TYPE_MINUS || current_token.type == TOKEN_TYPE_PLUS) {
-        char* op = current_token.lexeme;
-        advance_token();
-        ASTNode* right = parse_term(parent);
-        if (!right) return NULL;
-
-        ASTNode* binary_op_node = create_binary_op_node(left, op, right,parent);
-        left->parent = binary_op_node;
-        right->parent = binary_op_node;
-        left = binary_op_node;
-    }
-    return left;
-}
-
-ASTNode* parse_relation_expression(ASTNode* parent) {
-    ASTNode* left = parse_expression(parent);
-    if(!left) return NULL;
-
-    if (current_token.type == TOKEN_TYPE_LTN || current_token.type == TOKEN_TYPE_MTN ||
-           current_token.type == TOKEN_TYPE_MEQ || current_token.type == TOKEN_TYPE_LEQ ||
-           current_token.type == TOKEN_TYPE_EQ || current_token.type == TOKEN_TYPE_NEQ) {
-
-        char* op = current_token.lexeme;
-        advance_token();
-        ASTNode* right = parse_expression(parent);
-        if (!right) return NULL;
-
-        ASTNode* binary_op_node = create_binary_op_node(left, op, right,parent);
-        left->parent = binary_op_node;
-        right->parent = binary_op_node;
-        left = binary_op_node;
-    }
-    return left;
 }
 
 ASTNode* parse_function_declaration(ASTNode* parent)
@@ -320,7 +254,6 @@ ASTNode* parse_declaration(NodeType type, ASTNode* parent)
         decl->left = data_type;
     }
 
-    if(match(TOKEN_TYPE_SEMICOLON)) return decl;
 
     if(!match(TOKEN_TYPE_ASSIGN))error(PARSER_ERROR_SYNTAX);
 
@@ -345,6 +278,7 @@ ASTNode* parse_declaration(NodeType type, ASTNode* parent)
 ASTNode* parse_assignment(char* id_lexeme, ASTNode* parent) {
     ASTNode* assignment = new_ast_node(NODE_ASSIGNMENT,"=",parent);
     ASTNode* expr = precedence_analysis(assignment);
+
     if(!expr) return NULL;
     assignment->left = new_ast_node(NODE_IDENTIFIER,id_lexeme,assignment);
     assignment->right = expr;
@@ -521,21 +455,4 @@ ASTNode* parse_statement(ASTNode* parent) {
     }
 
     return NULL;
-}
-
-void print_ast(ASTNode* node, int depth, bool is_left,bool color) {
-    if (!node) return;
-    for (int i = 0; i < depth; ++i) {
-        if (i == depth - 1) {
-            printf(is_left ? "├── " : "└── ");
-        } else {
-            printf("    ");
-        }
-    }
-    printf( "Node Type: %d," " Lexeme: %s ,flag=%d\n" , node->type, node->lexeme ? node->lexeme : "NULL",node->retype_flag);
-
-    if (node->left || node->right) {
-        print_ast(node->left, depth + 1, true,color);
-        print_ast(node->right, depth + 1, false,color);
-    }
 }

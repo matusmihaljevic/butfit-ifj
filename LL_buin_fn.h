@@ -4,7 +4,7 @@
  * @file linked.h
  * @brief Header for linked.c
  *
- * @author Jaroslav Podmajerský
+ * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
 #ifndef LL_BUIN_FN_H

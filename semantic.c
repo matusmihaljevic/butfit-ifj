@@ -17,8 +17,8 @@ void semantic_check_prologue(ASTNode* first_statement) {
     ASTNode* node = first_statement->right;
     while (node->type != NODE_PROLOG) {
         if (node->right == NULL) {
-            print_error(SEMANTIC_ERROR_UNDEFINED, 0, "Prologue not found");
-            exit(SEMANTIC_ERROR_UNDEFINED);
+            print_error(PARSER_ERROR_SYNTAX, 0, "Prologue not found");
+            exit(PARSER_ERROR_SYNTAX);
         }
         node = node->right;
     }
@@ -50,7 +50,6 @@ int get_type(ASTNode* type_node) {
 void check_unused_identifiers(RBNode* node, ASTNode* ptr) {
 	if (node != symtable->NIL) {
         if (node->data->nodeType != FN && node->data->ptr == ptr && node->data->changed == false) {
-			//printf("Unused identifier: %s\n", node->name.data);
 			print_error(SEMANTIC_ERROR_UNUSED_VAR, 0, "Unused identifier");
 			exit(SEMANTIC_ERROR_UNUSED_VAR);
 		}
@@ -60,14 +59,11 @@ void check_unused_identifiers(RBNode* node, ASTNode* ptr) {
 }
 
 RBNode* find_RBNode_by_code_block(RBNode* root, ASTNode* ptr) {
-	// Ak je strom prázdny alebo ak sme našli uzol s hľadaným ptr
     if (root == NULL || root->data->ptr == ptr)
         return root;
-	// Prehľadávame ľavý podstrom
     RBNode* found = find_RBNode_by_code_block(root->left, ptr);
-    if (found != NULL) // Ak sme uzol našli, vrátime ho
+    if (found != NULL)
         return found;
-    // Prehľadávame pravý podstrom
     return find_RBNode_by_code_block(root->right, ptr);
 }
 
@@ -75,7 +71,6 @@ void remove_RBNodes_by_code_block(ASTNode* ptr) {
 	check_unused_identifiers(symtable->root, ptr);
 	RBNode* node_to_delete = find_RBNode_by_code_block(symtable->root, ptr);
 	while (node_to_delete != NULL) {
-		//printf("			DELETING NODE: %s\n", node_to_delete->name.data);
 		delete_RBNode(symtable, node_to_delete);
 		node_to_delete = find_RBNode_by_code_block(symtable->root, ptr);
 	}
@@ -170,8 +165,8 @@ TypeProperties* compute_binary_op_type(ASTNode* binary_op_node, bool condition) 
     result->retype = false;
     result->mutable = op1->mutable || op2->mutable;
     bool error = false;
-    if (op1->varType == VOID || op2->varType == VOID || op1->varType == U8 ||
-        op2->varType == U8 || op1->varType == NULL_C || op2->varType == NULL_C) {
+    if (op1->varType == VOID || op2->varType == VOID || op1->varType == U8 || op2->varType == U8
+	|| (op1->varType == NULL_C && !condition) || (op2->varType == NULL_C && !condition)) {
         error = true;
     } else if (op1->varType == op2->varType) {
         if(!strcmp(binary_op_node->lexeme, "/") && (op1->varType == INT)) binary_op_node->lexeme = "//";
@@ -281,6 +276,10 @@ void compute_expression_type(ASTNode* expression_root, bool condition) {
     }
     switch (expression_root->type) {
     case NODE_IDENTIFIER:
+		if (!strcmp(expression_root->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in expression");
+			exit(PARSER_ERROR_SYNTAX);
+		}
         check_identifier(expression_root);
         stack_property_push(&type_properties, compute_identifier_type(expression_root));
         break;
@@ -327,6 +326,10 @@ void semantic_check_main() {
 void semantic_check_global_code_block(ASTNode* main_code_block){
     ASTNode* statement_node = main_code_block->left->left;
     while (statement_node != NULL) {
+		if (!strcmp(statement_node->right->right->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in function name");
+			exit(PARSER_ERROR_SYNTAX);
+		}
         if (statement_node->right->type != NODE_FUNCTION_DECLARATION) {
             print_error(SEMANTIC_ERROR_OTHER, 0, "Global code block contains non-function declaration");
             exit(SEMANTIC_ERROR_OTHER);
@@ -392,6 +395,10 @@ void check_assignment(ASTNode* assignment) {
 }
 
 void check_declaration(ASTNode* decl_node) {
+	if (!strcmp(decl_node->right->lexeme, "_")){
+		print_error(PARSER_ERROR_SYNTAX, 0, "Discard in declaration");
+		exit(PARSER_ERROR_SYNTAX);
+	}
     if (find_RBNode(symtable->root, decl_node->right->lexeme) != NULL) {
         print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Variable or constant redefinition");
         exit(SEMANTIC_ERROR_REDEFINITION);
@@ -449,35 +456,48 @@ void check_condition(ASTNode* expression) {
 }
 
 void check_if_statement(ASTNode* if_statement) {
-    //printf("            IF STATEMENT: %s\n", if_statement->lexeme);
     compute_expression_type(if_statement->left, true);
     TypeProperties* exp_type = stack_property_pop(&type_properties);
     if (if_statement->right->type == NODE_IDENTIFIER) {
+		if (!strcmp(if_statement->right->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in if statement declaration");
+			exit(PARSER_ERROR_SYNTAX);
+		}
 		if (!exp_type->nullable) {
 			print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Non-nullable condition in if statement");
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
 		}
-		if_statement->right->code_block = if_statement;
-        insert_RBNode(symtable, if_statement->right->lexeme, CONST, exp_type->varType, false, false, if_statement);
+		if_statement->right->code_block = if_statement->right->left;
+		if (find_RBNode(symtable->root, if_statement->right->lexeme) != NULL){
+			print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Non-nullable id redefinition in positive if branch");
+			exit(SEMANTIC_ERROR_REDEFINITION);
+		}
+        insert_RBNode(symtable, if_statement->right->lexeme, CONST, exp_type->varType, false, false, if_statement->right->left);
     } else {
 		check_condition(if_statement->left);
 	}
     free(exp_type);
     semantic_check_body_block(if_statement->right->left);
     semantic_check_body_block(if_statement->right->right);
-    remove_RBNodes_by_code_block(if_statement);
 }
 
 void check_while_statement(ASTNode* while_statement) {
-    //printf("            WHILE STATEMENT: %s\n", while_statement->lexeme);
     compute_expression_type(while_statement->left, true);
     TypeProperties* exp_type = stack_property_pop(&type_properties);
 	if (while_statement->right->type == NODE_IDENTIFIER) {
+		if (!strcmp(while_statement->right->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in while statement declaration");
+			exit(PARSER_ERROR_SYNTAX);
+		}
 		if (!exp_type->nullable) {
 			print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Non-nullable condition in while statement");
 			exit(SEMANTIC_ERROR_TYPE_MISMATCH);
 		}
 		while_statement->right->code_block = while_statement;
+		if (find_RBNode(symtable->root, while_statement->right->lexeme) != NULL) {
+			print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Non-nullable id redefinition");
+			exit(SEMANTIC_ERROR_REDEFINITION);
+		}
         insert_RBNode(symtable, while_statement->right->lexeme, CONST, exp_type->varType, false, false, while_statement);
     } else {
 		check_condition(while_statement->left);
@@ -485,6 +505,32 @@ void check_while_statement(ASTNode* while_statement) {
     free(exp_type);
     semantic_check_body_block(while_statement->right->left);
 	remove_RBNodes_by_code_block(while_statement);
+}
+
+void check_continue_break(ASTNode* statement) {
+	while (statement != NULL) {
+		if (statement->type == NODE_FOR_STATEMENT) {
+			return;
+		}
+		statement = statement->parent;
+	}
+	print_error(SEMANTIC_ERROR_OTHER, 0, "Continue or break not in loop");
+	exit(SEMANTIC_ERROR_OTHER);
+}
+
+void check_for_statement(ASTNode* for_statement) {
+	compute_expression_type(for_statement->left, false);
+	TypeProperties* exp_type = stack_property_pop(&type_properties);
+	if (exp_type->varType != U8) {
+		print_error(SEMANTIC_ERROR_TYPE_MISMATCH, 0, "Non string in for statement");
+		exit(SEMANTIC_ERROR_TYPE_MISMATCH);
+	}
+	if (find_RBNode(symtable->root, for_statement->right->lexeme) == NULL && !strcmp(for_statement->right->lexeme, "_")) {
+		insert_RBNode(symtable, for_statement->right->lexeme, CONST, INT, false, false, for_statement);
+	}
+	semantic_check_body_block(for_statement->right->left);
+	remove_RBNodes_by_code_block(for_statement);
+	free(exp_type);
 }
 
 RBNode* find_parent_function(ASTNode* node) {
@@ -519,7 +565,8 @@ void check_return(ASTNode* return_node) {
 			exit(SEMANTIC_ERROR_RETURN_EXPR);
 		}
 	}
-	parent_fn->data->return_found = true;
+	ASTNode* code_block = find_parent_code_block(return_node);
+	code_block->code_block = return_node;
 }
 
 void semantic_check_statement(ASTNode* statement) {
@@ -545,6 +592,13 @@ void semantic_check_statement(ASTNode* statement) {
     case NODE_WHILE_STATEMENT:
         check_while_statement(statement->right);
 		break;
+	case NODE_FOR_STATEMENT:
+		check_for_statement(statement->right);
+		break;
+	case NODE_BREAK_STATEMENT:
+	case NODE_CONTINUE_STATEMENT:
+		check_continue_break(statement);
+		break;
 	case NODE_RETURN:
         check_return(statement->right);
         break;
@@ -555,9 +609,7 @@ void semantic_check_statement(ASTNode* statement) {
 
 void semantic_check_body_block(ASTNode* fn_code_block) {
     ASTNode* statement = fn_code_block->left;
-    //printf("  CODE BLOCK\n");
     while (statement != NULL) {
-        //printf("    STATEMENT: %s\n", statement->right->lexeme);
         semantic_check_statement(statement);
         statement = statement->left;
     }
@@ -568,6 +620,10 @@ void declare_params(ASTNode* param) {
     ASTNode* parent_fn = param->parent->right;
     bool param_nullable;
     while (param != NULL) {
+		if (!strcmp(param->lexeme, "_")){
+			print_error(PARSER_ERROR_SYNTAX, 0, "Discard in parameter declaration");
+			exit(PARSER_ERROR_SYNTAX);
+		}
 		param->code_block = parent_fn;
         if (find_RBNode(symtable->root, param->lexeme) != NULL) {
             print_error(SEMANTIC_ERROR_REDEFINITION, 0, "Parameter redefinition");
@@ -579,17 +635,33 @@ void declare_params(ASTNode* param) {
     }
 }
 
+bool check_missing_return(ASTNode* code_block) {
+	if (code_block->code_block != NULL) {
+		return true;
+	}
+	ASTNode* statement = code_block->left;
+	while (statement != NULL) {
+		if (statement->right->type == NODE_IF_STATEMENT) {
+			if (check_missing_return(statement->right->right->left) &&
+			check_missing_return(statement->right->right->right)) {
+				return true;
+			}
+		}
+		statement = statement->left;
+	}
+	return false;
+}
+
 void semantic_check_functions(ASTNode* main_code_block) {
     ASTNode* current_function = main_code_block->left->left;
     while (current_function != NULL) {
-        //printf("FUNCTION: %s\n", current_function->right->right->lexeme);
         if (current_function->right->left != NULL) {
             declare_params(current_function->right->left);
         }
         semantic_check_body_block(current_function->right->right->right);
         remove_RBNodes_by_code_block(current_function->right->right);
 		RBNode* fn = find_RBNode(symtable->root, current_function->right->right->lexeme);
-		if (!fn->data->return_found && fn->data->varType != VOID) {
+		if (!check_missing_return(current_function->right->right->right) && fn->data->varType != VOID) {
 			print_error(SEMANTIC_ERROR_RETURN_EXPR, 0, "Function without return");
 			exit(SEMANTIC_ERROR_RETURN_EXPR);
 		}

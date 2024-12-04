@@ -8,7 +8,7 @@
  * an abstract syntax tree (AST) into the target language instructions.
  * Each function corresponds to a specific type of AST node.
  *
- * @author Jaroslav Podmajerský
+ * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
 #include "scanner.h"

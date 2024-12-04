@@ -2,7 +2,7 @@
  * Project: Implementace překladače imperativního jazyka IFJ24.
  *
  * @file symtable.c
- * @brief Implementation of operations with Red Black Tree.
+ * @brief Implementation of operations with Red-Black Tree.
  *
  * @author Adam Bojnanský <xbojnaa00@stud.fit.vutbr.cz>
  */
@@ -15,17 +15,16 @@ RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nul
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
         return NULL;
     }
-    // Alokácia pamäte pre RBNodeData
     newNode->data = (RBNodeData*)malloc(sizeof(RBNodeData));
     if (newNode->data == NULL) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
-        free(newNode); // Uvoľnenie alokovanej pamäte pre uzol
+        free(newNode);
         return NULL;
     }
     int ret = DString_init(&newNode->name);
     if (ret > 0) {
         print_error(COMPILER_ERROR_INTERNAL, 0, "Internal compiler error. Memory allocation failed.");
-        free(newNode->data); // Uvoľnenie alokovanej pamäte pre RBNodeData
+        free(newNode->data);
         free(newNode);
         return NULL;
     }
@@ -35,8 +34,7 @@ RBNode* create_RBNode(char* name, RBNodeType nodeType, VarType varType, bool nul
     newNode->data->ptr = ptr;
     newNode->data->nullable = nullable;
     newNode->data->changed = changed;
-    newNode->data->return_found = false;
-    newNode->color = RED; // New nodes are red by default
+    newNode->color = RED;
     newNode->left = newNode->right = newNode->parent = NULL;
     return newNode;
 }
@@ -64,7 +62,7 @@ void left_rotate(RedBlackTree* tree, RBNode* x) {
     y->parent = x->parent;
 
     if (x->parent == NULL) {
-        tree->root = y; // Update root if x is root
+        tree->root = y;
     } else if (x == x->parent->left) {
         x->parent->left = y;
     } else {
@@ -86,7 +84,7 @@ void right_rotate(RedBlackTree* tree, RBNode* y) {
     x->parent = y->parent;
 
     if (y->parent == NULL) {
-        tree->root = x; // Update root if y is root
+        tree->root = x;
     } else if (y == y->parent->right) {
         y->parent->right = x;
     } else {
@@ -100,13 +98,13 @@ void right_rotate(RedBlackTree* tree, RBNode* y) {
 void fix_violation(RedBlackTree* tree, RBNode* z) {
     while (z->parent != NULL && z->parent->color == RED) {
         if (z->parent == z->parent->parent->left) {
-            RBNode* y = z->parent->parent->right; // Uncle
+            RBNode* y = z->parent->parent->right;
 
             if (y != NULL && y->color == RED) {
                 z->parent->color = BLACK;
                 y->color = BLACK;
                 z->parent->parent->color = RED;
-                z = z->parent->parent; // Move up the tree
+                z = z->parent->parent;
             } else {
                 if (z == z->parent->right) {
                     z = z->parent;
@@ -117,13 +115,13 @@ void fix_violation(RedBlackTree* tree, RBNode* z) {
                 right_rotate(tree, z->parent->parent);
             }
         } else {
-            RBNode* y = z->parent->parent->left; // Uncle
+            RBNode* y = z->parent->parent->left;
 
             if (y != NULL && y->color == RED) {
                 z->parent->color = BLACK;
                 y->color = BLACK;
                 z->parent->parent->color = RED;
-                z = z->parent->parent; // Move up the tree
+                z = z->parent->parent;
             } else {
                 if (z == z->parent->left) {
                     z = z->parent;
@@ -135,7 +133,7 @@ void fix_violation(RedBlackTree* tree, RBNode* z) {
             }
         }
     }
-    tree->root->color = BLACK; // Ensure the root is always black
+    tree->root->color = BLACK;
 }
 
 int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType varType, bool nullable, bool changed, ASTNode* ptr) {
@@ -146,7 +144,7 @@ int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType v
     newNode->left = tree->NIL;
     newNode->right = tree->NIL;
 
-    RBNode* y = NULL; // Parent
+    RBNode* y = NULL;
     RBNode* x = tree->root;
 
     while (x != tree->NIL) {
@@ -161,14 +159,13 @@ int insert_RBNode(RedBlackTree* tree, char* name, RBNodeType nodeType, VarType v
     newNode->parent = y;
 
     if (y == NULL) {
-        tree->root = newNode; // Tree was empty
+        tree->root = newNode;
     } else if (strcmp(newNode->name.data, y->name.data) < 0) {
         y->left = newNode;
     } else {
         y->right = newNode;
     }
 
-    // Fix the Red-Black Tree properties
     fix_violation(tree, newNode);
     return 0;
 }
@@ -187,7 +184,7 @@ void fix_deletion(RedBlackTree* tree, RBNode* x) {
         }
 
         if (x == x->parent->left) {
-            RBNode* w = x->parent->right; // Sibling
+            RBNode* w = x->parent->right;
 
             if (w->color == RED) {
                 w->color = BLACK;
@@ -218,7 +215,7 @@ void fix_deletion(RedBlackTree* tree, RBNode* x) {
                 x = tree->root;
             }
         } else {
-            RBNode* w = x->parent->left; // Sibling
+            RBNode* w = x->parent->left;
 
             if (w->color == RED) {
                 w->color = BLACK;
@@ -254,10 +251,8 @@ void fix_deletion(RedBlackTree* tree, RBNode* x) {
 }
 
 RBNode* find_RBNode(RBNode* root, char* name) {
-    // Ak je strom prázdny alebo ak sme našli uzol s hľadaným názvom
     if (root == NULL || strcmp(root->name.data, name) == 0)
         return root;
-    // Porovnávame názov s aktuálnym uzlom, aby sme určili, kam pokračovať
     if (strcmp(name, root->name.data) < 0)
         return find_RBNode(root->left, name);
     else
@@ -285,7 +280,7 @@ void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
         return;
     }
 
-    y = z; // Node to be deleted
+    y = z;
     Color originalColor = y->color;
 
     if (z->left == tree->NIL) {
@@ -314,8 +309,8 @@ void delete_RBNode(RedBlackTree* tree, RBNode* nodeToDelete) {
     }
 
     DString_free(&z->name);
-    free(z->data); // Free the data
-    free(z); // Free the node
+    free(z->data);
+    free(z);
 
     if (originalColor == BLACK) {
         fix_deletion(tree, x);
