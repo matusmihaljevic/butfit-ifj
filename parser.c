@@ -141,63 +141,6 @@ ASTNode* parse_factor(ASTNode* parent) {
     return NULL;
 }
 
-ASTNode* parse_term(ASTNode* parent) {
-    ASTNode* left = parse_factor(parent);
-    if (!left) return NULL;
-
-    while (current_token.type == TOKEN_TYPE_MUL || current_token.type == TOKEN_TYPE_DIV) {
-        char* op = current_token.lexeme;
-        advance_token();
-        ASTNode* right = parse_factor(parent);
-        if (!right) return NULL;
-
-        ASTNode* binary_op_node = create_binary_op_node(left, op, right, parent);
-        left->parent = binary_op_node;
-        right->parent = binary_op_node;
-        left = binary_op_node;
-    }
-    return left;
-}
-
-ASTNode* parse_expression(ASTNode* parent) {
-    ASTNode* left = parse_term(parent);
-    if (!left) return NULL;
-
-    while (current_token.type == TOKEN_TYPE_MINUS || current_token.type == TOKEN_TYPE_PLUS) {
-        char* op = current_token.lexeme;
-        advance_token();
-        ASTNode* right = parse_term(parent);
-        if (!right) return NULL;
-
-        ASTNode* binary_op_node = create_binary_op_node(left, op, right,parent);
-        left->parent = binary_op_node;
-        right->parent = binary_op_node;
-        left = binary_op_node;
-    }
-    return left;
-}
-
-ASTNode* parse_relation_expression(ASTNode* parent) {
-    ASTNode* left = parse_expression(parent);
-    if(!left) return NULL;
-
-    if (current_token.type == TOKEN_TYPE_LTN || current_token.type == TOKEN_TYPE_MTN ||
-           current_token.type == TOKEN_TYPE_MEQ || current_token.type == TOKEN_TYPE_LEQ ||
-           current_token.type == TOKEN_TYPE_EQ || current_token.type == TOKEN_TYPE_NEQ) {
-
-        char* op = current_token.lexeme;
-        advance_token();
-        ASTNode* right = parse_expression(parent);
-        if (!right) return NULL;
-
-        ASTNode* binary_op_node = create_binary_op_node(left, op, right,parent);
-        left->parent = binary_op_node;
-        right->parent = binary_op_node;
-        left = binary_op_node;
-    }
-    return left;
-}
-
 ASTNode* parse_function_declaration(ASTNode* parent)
 {
     ASTNode* function_decl = new_ast_node(NODE_FUNCTION_DECLARATION,"fn_decl",parent);

@@ -8,18 +8,26 @@
  * including node types, the structure of AST nodes, and functions for creating
  * and manipulating the AST.
  *
- * @author Jaroslav Podmajerský
- * @date 2024-10-16
+ * @author Jaroslav Podmajerský <xpodmaj00@stud.fit.vutbr.cz>
  */
 
 #ifndef AST_H
 #define AST_H
 
 #include<stdlib.h>
-#define INT_TO_FLOAT_op1 0
-#define INT_TO_FLOAT_op2 1
-#define FLOAT_TO_INT_op1 2
-#define FLOAT_TO_INT_op2 3
+
+
+/**
+ * @brief Enum representing different types of intern implicit retypes
+ */
+typedef enum {
+	INT_TO_FLOAT_op1,	/**< Represents retyping of first operand from int to float value. */
+	INT_TO_FLOAT_op2,	/**< Represents retyping of second operand from int to float value. */
+	FLOAT_TO_INT_op1,	/**< Represents retyping of first operand from flaot to int value. */
+	FLOAT_TO_INT_op2	/**< Represents retyping of second operand from float to int value. */
+} RetypeType;
+
+
 /**
  * @brief Enum representing different types of AST nodes.
  *
@@ -76,8 +84,8 @@ typedef union {
  * and pointers to child and parent nodes.
  */
 typedef struct ASTNode {
-    NodeType type;                /**< Type of the node (as defined in NodeType enum). */
     char* lexeme;                 /**< Lexeme associated with the node (e.g., an identifier or operator). */
+    NodeType type;                /**< Type of the node (as defined in NodeType enum). */
     Variable variable;            /**< Value associated with the node (if applicable). */
     int retype_flag;              /**< Flag indicating implicit retyping */
     struct ASTNode* left;         /**< Pointer to the left child node. */

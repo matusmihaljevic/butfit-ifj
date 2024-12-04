@@ -10,6 +10,7 @@
 #include"codegen.h"
 #include"dstring.h"
 #include"semantic.h"
+
 DString Output;
 ASTNode* root_node;
 bool prologue_passed = false;
@@ -112,7 +113,6 @@ void generate_expression(ASTNode* expression_root_node){
     if(expression_root_node->type == NODE_IDENTIFIER){
 
         DString_concat(&Output,"PUSHS LF@",expression_root_node->lexeme,"_",get_CB_hash(expression_root_node->code_block),"\n",NULL);
-		//printf("|LEX: %s| BLOK: %s|\n",expression_root_node->lexeme,get_CB_hash(expression_root_node->code_block));
     }
     else if(expression_root_node->type == NODE_BINARY_OP){
         generate_binary_op(expression_root_node);
