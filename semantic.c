@@ -661,8 +661,7 @@ void semantic_check_functions(ASTNode* main_code_block) {
         semantic_check_body_block(current_function->right->right->right);
         remove_RBNodes_by_code_block(current_function->right->right);
 		RBNode* fn = find_RBNode(symtable->root, current_function->right->right->lexeme);
-		fn->data->return_found = check_missing_return(current_function->right->right->right);
-		if (!fn->data->return_found && fn->data->varType != VOID) {
+		if (!check_missing_return(current_function->right->right->right) && fn->data->varType != VOID) {
 			print_error(SEMANTIC_ERROR_RETURN_EXPR, 0, "Function without return");
 			exit(SEMANTIC_ERROR_RETURN_EXPR);
 		}

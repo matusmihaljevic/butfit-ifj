@@ -42,7 +42,6 @@ typedef struct RBNodeData {
     ASTNode* ptr;
     bool nullable;
     bool changed;
-    bool return_found;
 } RBNodeData;
 
 typedef struct RBNode {
